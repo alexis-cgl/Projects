@@ -185,3 +185,19 @@ footer {
     padding: 32px 0;
   }
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .art {
+    overflow: visible;
+  }
+
+  #ring {
+    transform-origin: center;
+    transform-box: view-box;
+    animation: ring-turn 32s linear infinite;
+  }
+}
+
+@keyframes ring-turn {
+  to { transform: rotate(1turn); }
+}
