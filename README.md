@@ -18,8 +18,8 @@ Une vitrine pour parcourir mes réalisations web. Chaque fiche présente un proj
 | Fichier | Rôle |
 | --- | --- |
 | [index.html](index.html) | Structure de la page, navigation et fiches du catalogue. |
-| [assets/css/styles.css](assets/css/styles.css) | Couleurs, mise en page mobile et rotation de l’anneau. |
-| [assets/js/ring.js](assets/js/ring.js) | Dessin des sections de l’anneau en SVG. |
+| [assets/css/styles.css](assets/css/styles.css) | Couleurs, mise en page mobile et styles du catalogue. |
+| [assets/js/ring.js](assets/js/ring.js) | Projection et animation de l’anneau filaire en SVG. |
 | [docs/banner.svg](docs/banner.svg) | Bannière de présentation du README. |
 
 ## Modifier la vitrine
