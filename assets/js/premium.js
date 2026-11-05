@@ -248,8 +248,13 @@
     layer.style.pointerEvents = "none";
     const target = card.getBoundingClientRect();
     const ratioX = target.width / innerWidth, ratioY = target.height / innerHeight;
-    gsap?.set?.(destination.clone, { opacity: 0 });
-    gsap?.set?.(backdrop, { opacity: 0 });
+    if (window.gsap) {
+      gsap.set(destination.clone, { opacity: 0 });
+      gsap.set(backdrop, { opacity: 0 });
+    } else {
+      destination.clone.style.opacity = '0';
+      backdrop.style.opacity = '0';
+    }
     function done() {
       cleanupRoute();
       // Remove stale inline carousel fades, then ask the portal to repaint.
