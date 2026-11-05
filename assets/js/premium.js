@@ -18,6 +18,9 @@
     document.title = project ? rackTitle : homeTitle;
     if (description) description.content = project ? rackDescription : homeDescription;
     if (canonical) canonical.href = project ? rackURL.href : homeCanonical;
+    const nav = document.querySelector('.site-header nav a[href="rackflow.html"]');
+    if (project) nav?.setAttribute("aria-current", "page");
+    else nav?.removeAttribute("aria-current");
   }
   let route = null, busy = false, cameraCount = 0;
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
