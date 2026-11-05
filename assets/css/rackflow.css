@@ -101,7 +101,8 @@
 
 .product-glow {
   position:absolute;
-  inset:-15%;
+  /* Keep the halo inside its layout box on 320px viewports; the blur remains visible. */
+  inset:0;
   z-index:-1;
   background:radial-gradient(ellipse at center,#8b5cf65c,transparent 70%);
   filter:blur(55px)
