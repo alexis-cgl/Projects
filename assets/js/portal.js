@@ -16,30 +16,53 @@
   let paintCount = 0;
   let centers = [];
   let lastRing;
-  // Cached once per rendered frame: full 3D orientation of the torus.
-  // Sliding its longitude around a rotationally symmetric mesh alone
-  // looks static, particularly in the hero's initial position.
+  // Preserve the torus's designed axis. Its highlight travels around the
+  // surface; the whole ring must NOT tumble or change its hero orientation.
+  // Cache the scroll-driven orientation's trigonometry once per frame.
   const rotation = { pitch: 0.90, yaw: 0, roll: -0.34, cp: 1, sp: 0, cy: 1, sy: 0, cr: 1, sr: 0 };
   function updateRotation() {
-    // The hero continuously turns in 3D, independent of scroll.
-    // Its autonomous spin blends away while the scroll-driven orientation
-    // takes over; returning to the top blends it back in.
-    // The scroll pin's 1.2s scrub can lag behind the actual scroll position.
-    // If the visitor is physically at the top, keep the torus spinning NOW,
-    // even while GSAP finishes easing the scroll-driven center state.
-    const hero = Math.max(
-      Math.max(0, 1 - state.center) ** 2,
-      Math.max(0, 1 - window.scrollY / Math.max(1, innerHeight))
-    );
-    rotation.pitch = 0.90 - state.center * 0.65 + Math.sin(phase * 0.65) * 0.11 * hero;
-    rotation.yaw = Math.sin(state.center * Math.PI) * 0.75 + phase * 0.90 * hero;
-    rotation.roll = -0.34 + state.center * 0.52 + Math.sin(phase * 0.40) * 0.11 * hero;
+    rotation.pitch = 0.90 - state.center * 0.65;
+    rotation.yaw = Math.sin(state.center * Math.PI) * 0.75;
+    rotation.roll = -0.34 + state.center * 0.52;
     rotation.cp = Math.cos(rotation.pitch);
     rotation.sp = Math.sin(rotation.pitch);
     rotation.cy = Math.cos(rotation.yaw);
     rotation.sy = Math.sin(rotation.yaw);
     rotation.cr = Math.cos(rotation.roll);
     rotation.sr = Math.sin(rotation.roll);
+  }
+
+  // Three softly illuminated filaments revolve CLOCKWISE along the torus'
+  // existing circumference. They rotate with its mesh (u += phase in project),
+  // without tilting the hoop or ever moving the center of its axis.
+  function drawRotatingHighlights(ring) {
+    const ribs = [0.12, 2.22, 4.36];
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let band = 0; band < ribs.length; band++) {
+      const start = ribs[band];
+      ctx.beginPath();
+      for (let step = 0; step <= 24; step++) {
+        const u = start - 0.32 + step * (0.32 / 24);
+        const [x, y] = project(u, 0.08);
+        const px = ring.x + x * ring.size;
+        const py = ring.y + y * ring.size;
+        if (step === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.strokeStyle = band === 0 ? 'rgba(220,200,255,0.72)' : 'rgba(178,143,255,0.40)';
+      ctx.lineWidth = band === 0 ? 2.5 : 1.5;
+      ctx.shadowColor = '#A78BFA';
+      ctx.shadowBlur = band === 0 ? 16 : 9;
+      ctx.stroke();
+
+      const [x, y] = project(start, 0.08);
+      ctx.beginPath();
+      ctx.arc(ring.x + x * ring.size, ring.y + y * ring.size, band === 0 ? 2.6 : 1.65, 0, turn);
+      ctx.fillStyle = band === 0 ? 'rgba(245,232,255,0.92)' : 'rgba(181,150,255,0.72)';
+      ctx.fill();
+    }
+    ctx.restore();
   }
   const particles = Array.from({ length: 64 }, (_, i) => ({
     angle: i * 2.39996, radius: 0.4 + (i % 13) / 13, size: 0.6 + (i % 3) * 0.4
@@ -120,6 +143,8 @@
       wire(ring, -0.03, 0.12 * speed);
     }
     wire(ring, 0, 0.60 - state.reveal * 0.25);
+    // A visible spin around the ring's own axis, not a rotation of that axis.
+    if (!motion.matches) drawRotatingHighlights(ring);
     lastRing = ring;
 
     for (const particle of particles) {
@@ -361,6 +386,9 @@
     getCard: key => cards.find(c => c.dataset.project === key) || null,
     get phase() { return phase; },
     get ringYaw() { return rotation.yaw; },
+    get ringPitch() { return rotation.pitch; },
+    get ringRoll() { return rotation.roll; },
+    get ringSpin() { return phase; },
     get inView() { return inView; },
     get paintCount() { return paintCount; },
     get frameActive() { return !!frame && !paused; } };
