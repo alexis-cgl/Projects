@@ -164,10 +164,12 @@
     route = { ...frameInfo, ...active, backdrop, stars, siblings, siblingOpacity, state, originHref };
     transitioning = true;
     pendingOpen = false;
+    portal()?.suspend(); // Freezes only this Canvas loop, avoiding tween conflicts.
     document.documentElement.classList.add("world-navigating");
     const frameReady = await frameInfo.loaded;
     if (!frameReady) {
       cleanupRoute();
+      portal()?.resume();
       try { sessionStorage.setItem("projects-return-pending", "1"); } catch (_) {}
       location.assign(href);
       return;
@@ -236,6 +238,7 @@
     document.documentElement.classList.add("world-navigating");
     const { layer, siblings, siblingOpacity, state } = route;
     restoreState(state);
+    siblings.forEach(el => { el.style.opacity = "0"; });
     const card = targetCard();
     if (!card) { cleanupRoute(); portal()?.resume(); return; }
     const destination = cloneCard(card);
@@ -256,11 +259,11 @@
       backdrop.style.opacity = '0';
     }
     function done() {
-      cleanupRoute();
-      // Remove stale inline carousel fades, then ask the portal to repaint.
+      // Restore under the outgoing project layer: no intermediate home frame.
       siblings.forEach(el => { el.style.opacity = ""; });
       portal()?.resume();
       portal()?.restore(state);
+      cleanupRoute();
       const focus = card.querySelector('[data-cinematic="rackflow"]');
       focus?.focus({ preventScroll: true });
     }
