@@ -13,6 +13,7 @@
   let width, height, phase = 0, previous = 0, speed = 0;
   let timeline, context, frame = 0, active = -1, inView = true;
   let paused = false;
+  let paintCount = 0;
   let centers = [];
   let lastRing;
   const particles = Array.from({ length: 64 }, (_, i) => ({
@@ -80,6 +81,7 @@
   }
 
   function paint() {
+    paintCount++;
     ctx.clearRect(0, 0, width, height);
     const ring = ringPosition();
     const glow = ctx.createRadialGradient(ring.x, ring.y, 0, ring.x, ring.y, ring.size * 1.6);
@@ -272,11 +274,16 @@
     if (paused) return;
     const delta = Math.min((now - previous) / 1000 || 0, 0.05);
     previous = now;
-    if (!document.hidden && inView) {
+    if (!document.hidden) {
+      // ScrollTrigger-pinned elements can be reported outside the intersection
+      // threshold briefly after BFCache restoration. Keep the phase continuous
+      // and draw whenever the pinned scroll experience itself is active.
       if (!motion.matches) phase += delta * 0.20 * (1 - state.center * 0.4);
       speed *= Math.exp(-delta * 4);
-      layoutCards();
-      paint();
+      if (inView || timeline?.scrollTrigger?.isActive) {
+        layoutCards();
+        paint();
+      }
     }
     frame = requestAnimationFrame(animate);
   }
@@ -288,6 +295,7 @@
   function resume() {
     paused = false;
     previous = 0;
+    inView = true; // Paint immediately while observers settle after return.
     if (window.ScrollTrigger && timeline?.scrollTrigger) ScrollTrigger.refresh();
     layoutCards();
     paint();
@@ -317,6 +325,8 @@
   window.ProjectsPortal = { snapshot, restore, suspend, resume, goTo,
     getCard: key => cards.find(c => c.dataset.project === key) || null,
     get phase() { return phase; },
+    get inView() { return inView; },
+    get paintCount() { return paintCount; },
     get frameActive() { return !!frame && !paused; } };
   setup();
   try {
