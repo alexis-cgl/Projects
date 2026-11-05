@@ -10,12 +10,43 @@
       gsap.fromTo(".product-window", { opacity: 0, scale: 1.35, filter: "blur(12px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.15, ease: "power3.out" });
     }
   }
-  if (!reduce.matches && window.gsap && window.ScrollTrigger) {
+  let gsapContext;
+  function mountScrollAnimations() {
+    gsapContext?.revert();
+    gsapContext = null;
+    if (reduce.matches || !window.gsap || !window.ScrollTrigger) return;
     gsap.registerPlugin(ScrollTrigger);
-    gsap.utils.toArray(".story-card").forEach((card, i) => {
-      gsap.fromTo(card, { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: .85, delay: i * .08, scrollTrigger: { trigger: card, start: "top 90%", once: true } });
+    gsapContext = gsap.context(() => {
+      gsap.utils.toArray(".story-card").forEach((card, i) => {
+        gsap.fromTo(card, { y: 50, opacity: 0 }, { y: 0, opacity: 1,
+          duration: .85, delay: i * .08,
+          scrollTrigger: { trigger: card, start: "top 90%", once: true }
+        });
+      });
+      gsap.fromTo(".hero-product", { y: -15 }, { y: 28, ease: "none",
+        scrollTrigger: { trigger: ".rack-hero", start: "top top", end: "bottom top", scrub: .9 }
+      });
+    }, document.body);
+    ScrollTrigger.refresh();
+  }
+  mountScrollAnimations();
+  reduce.addEventListener("change", mountScrollAnimations);
+  window.addEventListener("pagehide", () => gsapContext?.revert());
+  window.addEventListener("pageshow", event => {
+    if (event.persisted) mountScrollAnimations();
+  });
+  // Direct bookmarks and reloads do not have a mounted Projects route.
+  // Preserve the last carousel state for a graceful normal-page fallback.
+  if (window.parent === window) {
+    document.querySelectorAll('a[href^="index.html"]').forEach(link => {
+      link.addEventListener("click", () => {
+        try {
+          if (sessionStorage.getItem("projects-world-state")) {
+            sessionStorage.setItem("projects-return-pending", "1");
+          }
+        } catch (_) {}
+      });
     });
-    gsap.fromTo(".hero-product", { y: -15 }, { y: 28, ease: "none", scrollTrigger: { trigger: ".rack-hero", start: "top top", end: "bottom top", scrub: .9 } });
   }
   const cabinet = document.getElementById("rackCabinet");
   const status = document.getElementById("demoStatus");
