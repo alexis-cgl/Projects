@@ -16,6 +16,25 @@
   let paintCount = 0;
   let centers = [];
   let lastRing;
+  // Cached once per rendered frame: full 3D orientation of the torus.
+  // Sliding its longitude around a rotationally symmetric mesh alone
+  // looks static, particularly in the hero's initial position.
+  const rotation = { pitch: 0.90, yaw: 0, roll: -0.34, cp: 1, sp: 0, cy: 1, sy: 0, cr: 1, sr: 0 };
+  function updateRotation() {
+    // The hero continuously turns in 3D, independent of scroll.
+    // Its autonomous spin blends away while the scroll-driven orientation
+    // takes over; returning to the top blends it back in.
+    const hero = Math.max(0, 1 - state.center) ** 2;
+    rotation.pitch = 0.90 - state.center * 0.65 + Math.sin(phase * 0.65) * 0.11 * hero;
+    rotation.yaw = Math.sin(state.center * Math.PI) * 0.75 + phase * 0.90 * hero;
+    rotation.roll = -0.34 + state.center * 0.52 + Math.sin(phase * 0.40) * 0.11 * hero;
+    rotation.cp = Math.cos(rotation.pitch);
+    rotation.sp = Math.sin(rotation.pitch);
+    rotation.cy = Math.cos(rotation.yaw);
+    rotation.sy = Math.sin(rotation.yaw);
+    rotation.cr = Math.cos(rotation.roll);
+    rotation.sr = Math.sin(rotation.roll);
+  }
   const particles = Array.from({ length: 64 }, (_, i) => ({
     angle: i * 2.39996, radius: 0.4 + (i % 13) / 13, size: 0.6 + (i % 3) * 0.4
   }));
@@ -46,12 +65,9 @@
     let x = radius * Math.cos(u);
     let y = radius * Math.sin(u);
     let z = tube * Math.sin(v);
-    const ax = 0.90 - state.center * 0.65;
-    const ay = Math.sin(state.center * Math.PI) * 0.75;
-    const az = -0.34 + state.center * 0.52;
-    [y, z] = [y * Math.cos(ax) - z * Math.sin(ax), y * Math.sin(ax) + z * Math.cos(ax)];
-    [x, z] = [x * Math.cos(ay) + z * Math.sin(ay), -x * Math.sin(ay) + z * Math.cos(ay)];
-    return [x * Math.cos(az) - y * Math.sin(az), x * Math.sin(az) + y * Math.cos(az), z];
+    [y, z] = [y * rotation.cp - z * rotation.sp, y * rotation.sp + z * rotation.cp];
+    [x, z] = [x * rotation.cy + z * rotation.sy, -x * rotation.sy + z * rotation.cy];
+    return [x * rotation.cr - y * rotation.sr, x * rotation.sr + y * rotation.cr, z];
   }
 
   function wire(ring, offset, opacity) {
@@ -81,6 +97,7 @@
   }
 
   function paint() {
+    updateRotation();
     paintCount++;
     ctx.clearRect(0, 0, width, height);
     const ring = ringPosition();
@@ -283,7 +300,7 @@
       // ScrollTrigger-pinned elements can be reported outside the intersection
       // threshold briefly after BFCache restoration. Keep the phase continuous
       // and draw whenever the pinned scroll experience itself is active.
-      if (!motion.matches) phase += delta * 0.20 * (1 - state.center * 0.4);
+      if (!motion.matches) phase += delta * 0.47 * (1 - state.center * 0.30);
       speed *= Math.exp(-delta * 4);
       if (inView || timeline?.scrollTrigger?.isActive) {
         layoutCards();
@@ -333,6 +350,7 @@
   window.ProjectsPortal = { snapshot, restore, suspend, resume, goTo,
     getCard: key => cards.find(c => c.dataset.project === key) || null,
     get phase() { return phase; },
+    get ringYaw() { return rotation.yaw; },
     get inView() { return inView; },
     get paintCount() { return paintCount; },
     get frameActive() { return !!frame && !paused; } };
