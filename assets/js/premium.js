@@ -251,6 +251,8 @@
     layer.style.pointerEvents = "none";
     const target = card.getBoundingClientRect();
     const ratioX = target.width / innerWidth, ratioY = target.height / innerHeight;
+    const mid = { width: Math.min(innerWidth * .7, 720), height: Math.min(innerHeight * .76, 680) };
+    const midX = (innerWidth - mid.width) / 2, midY = (innerHeight - mid.height) / 2;
     if (window.gsap) {
       gsap.set(destination.clone, { opacity: 0 });
       gsap.set(backdrop, { opacity: 0 });
@@ -269,16 +271,23 @@
     }
     if (motion.matches || !window.gsap) { done(); return; }
     gsap.set(layer, { transformOrigin: "top left", x: 0, y: 0, scaleX: 1, scaleY: 1 });
+    gsap.set(stars.children, { opacity: .65, scale: 2,
+      x: () => (Math.random() - .5) * 180, y: () => (Math.random() - .5) * 180 });
+    // Exact geometric waypoints of entry, traversed in reverse:
+    // fullscreen → centered featured card → original carousel rectangle.
     gsap.timeline({ onComplete: done })
       .to(backdrop, { opacity: .80, duration: .25 }, 0)
-      .to(layer, { scale: .95, duration: .18, ease: "power3.out" }, .03)
+      .to(layer, { scaleX: mid.width / innerWidth, scaleY: mid.height / innerHeight,
+        x: midX, y: midY, borderRadius: 22, duration: .67, ease: "power4.inOut" }, .08)
       .to(layer, { scaleX: ratioX, scaleY: ratioY, x: target.left, y: target.top,
-        borderRadius: 27, duration: .91, ease: "power4.inOut" }, .19)
-      .to(destination.clone, { opacity: 1, duration: .27 }, .89)
-      .to(layer, { opacity: 0, duration: .20 }, .92)
-      .to(siblings, { opacity: i => siblingOpacity[i], duration: .32, ease: "power2.out" }, .91)
-      .to(backdrop, { opacity: 0, duration: .35 }, 1.02)
-      .to(destination.clone, { opacity: 0, duration: .12 }, 1.19);
+        borderRadius: 27, duration: .48, ease: "power3.inOut" }, .75)
+      .to(stars.children, { opacity: 0, x: 0, y: 0, scale: .3,
+        stagger: .01, duration: .59, ease: "power3.out" }, .35)
+      .to(destination.clone, { opacity: 1, duration: .22 }, 1.02)
+      .to(layer, { opacity: 0, duration: .22 }, 1.08)
+      .to(siblings, { opacity: i => siblingOpacity[i], duration: .32, ease: "power2.out" }, 1.09)
+      .to(backdrop, { opacity: 0, duration: .30 }, 1.14)
+      .to(destination.clone, { opacity: 0, duration: .12 }, 1.32);
   }
 
   function returnHome() {
