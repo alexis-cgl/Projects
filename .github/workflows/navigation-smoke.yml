@@ -26,7 +26,7 @@ jobs:
           curl -fsSI http://127.0.0.1:8123/index.html
       - name: Verify source, links, CSS and metadata
         run: node tests/static-audit.cjs
-      - name: Verify 20 navigation cycles and accessibility fallback
-        run: PROJECTS_TEST_CHROME=1 node tests/navigation-smoke.cjs
       - name: Verify page lifecycle, keyboard interaction and responsive
         run: PROJECTS_TEST_CHROME=1 node tests/quality-regression.cjs
+      - name: Verify 20 navigation cycles and accessibility fallback
+        run: PROJECTS_TEST_CHROME=1 node tests/navigation-smoke.cjs
