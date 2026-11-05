@@ -302,7 +302,11 @@
       // and draw whenever the pinned scroll experience itself is active.
       if (!motion.matches) phase += delta * 0.47 * (1 - state.center * 0.30);
       speed *= Math.exp(-delta * 4);
-      if (inView || timeline?.scrollTrigger?.isActive) {
+      // ScrollTrigger may pin the stage while IntersectionObserver reports it
+      // outside the viewport at progress=0 (before the first scroll). Always
+      // paint when the hero is at the top; otherwise retain offscreen culling.
+      const heroAtTop = window.scrollY <= innerHeight;
+      if (heroAtTop || inView || timeline?.scrollTrigger?.isActive) {
         layoutCards();
         paint();
       }
