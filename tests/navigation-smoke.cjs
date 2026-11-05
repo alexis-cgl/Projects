@@ -31,7 +31,7 @@ const BASE = process.env.PROJECTS_TEST_URL || "http://127.0.0.1:8123/";
       assert.equal(await page.locator(".world-route").count(), 1, "Expected one mounted RackFlow route");
       assert.equal(await page.evaluate(() => window.ProjectsPortal.frameActive), false, "Canvas should be suspended inside RackFlow");
 
-      await page.frameLocator(".world-route iframe").locator('header a[href^="index.html"]').click({ timeout: 12000 });
+      await page.frameLocator(".world-route iframe").locator('header nav a[href^="index.html"]').click({ timeout: 12000 });
       await page.waitForFunction(() => !document.querySelector(".world-route") && !!window.ProjectsPortal?.frameActive, null, { timeout: 12000 });
       const after = await page.evaluate(() => window.ProjectsPortal.snapshot());
 
@@ -55,7 +55,7 @@ const BASE = process.env.PROJECTS_TEST_URL || "http://127.0.0.1:8123/";
     await quiet.goto(BASE, { waitUntil: "domcontentloaded" });
     await quiet.locator('[data-cinematic="rackflow"]').click();
     await quiet.waitForURL("**/rackflow.html");
-    await quiet.frameLocator(".world-route iframe").locator('header a[href^="index.html"]').click();
+    await quiet.frameLocator(".world-route iframe").locator('header nav a[href^="index.html"]').click();
     await quiet.waitForFunction(() => !document.querySelector(".world-route") && !!window.ProjectsPortal?.frameActive);
     assert.deepEqual(errors, [], "Reduced-motion uncaught errors");
     console.log("PASS 20 consecutive round-trips + reduced motion");
