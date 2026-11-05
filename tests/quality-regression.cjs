@@ -104,7 +104,7 @@ const repoHome = new URL("./", BASE).href;
         assert(shape.h1Right <= shape.innerWidth + 8,
           pathname + " title is clipped at width " + width + ": " + JSON.stringify(shape));
         assert(!shape.hasHorizontalScroll,
-          pathname + " has unexpected horizontal overflow at width " + width);
+          pathname + " has unexpected horizontal overflow at width " + width + ": " + JSON.stringify(shape));
       }
       await responsive.close();
     }
