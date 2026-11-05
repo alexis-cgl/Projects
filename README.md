@@ -62,29 +62,30 @@ Le portail 3D d'origine reste dessiné en Canvas 2D, avec un ratio de pixels lim
 
 Les licences et mentions d'attribution des versions locales de GSAP figurent dans \`assets/vendor/README.md\`.
 
-## Navigation réversible RackFlow
+## Navigation « caméra unique » RackFlow
 
-Le lien « Découvrir le projet » sur Projects ouvre RackFlow dans un calque plein écran **sans détruire l'accueil** :
+Sur Projects, **une seule surface graphique** relie la carte du carrousel à la page RackFlow. Au lieu de deux agrandissements successifs, une unique timeline GSAP pilote un paramètre de caméra normalisé de 0 (carte) à 1 (page plein écran), avec l'easing `expo.inOut`.
 
-1. Le carrousel enregistre sa progression ScrollTrigger, la carte active et la position réelle du scroll dans `sessionStorage`.
-2. Une copie de la carte effectue un zoom vers un écran RackFlow préchargé et isolé dans un document embarqué de même origine.
-3. Les boutons de retour RackFlow et le bouton Retour du navigateur rembobinent le mouvement : écran → carte centrale → position initiale exacte.
-4. L'instance Canvas et sa timeline restent montées et suspendues pendant la visite ; la reprise relance une seule boucle de rendu, sans dupliquer les listeners.
+- La page RackFlow est **préchargée** dans un document de même origine, hors de la zone interactive.
+- La carte est représentée dans **la même surface** que la page RackFlow. La géométrie est une interpolation affine continue de sa position exacte vers le plein écran.
+- L'éclairage, la disparition des bordures, l'atténuation du carrousel et la révélation progressive de RackFlow dépendent tous de **la même progression**.
+- Au retour, `timeline.reverse()` parcourt strictement les mêmes positions en sens inverse, sans nouvelle timeline et sans reconstruire le portail.
+- Le carrousel, son ScrollTrigger et son Canvas restent montés ; l'état de scroll et la carte sélectionnée sont restaurés à la sortie.
 
-La page `rackflow.html` reste directement consultable, et son retour se comporte comme une navigation classique avec récupération de la position précédente lorsqu'elle est connue. Les préférences `prefers-reduced-motion` désactivent les mouvements complexes.
+Le flux depuis un lien RackFlow direct reste navigable sans JavaScript ; si le préchargement échoue, le lien normal sert de repli. Le mode `prefers-reduced-motion` rend le changement de vue immédiat, sans mouvement spatial complexe.
 
-**Architecture :** JavaScript natif, GSAP Context et Canvas 2D. Il n'y a pas de composants React ni Three.js dans ce site. Ajouter React Router, Zustand ou React Three Fiber n'apporterait pas de bénéfice pour ce cycle de vie et augmenterait les risques de remount.
+**Architecture réelle :** HTML, CSS, JavaScript natif, GSAP et Canvas 2D. Le projet n'utilise pas React, Framer Motion ni Three.js : les ajouter uniquement pour cette transition alourdirait le déploiement et augmenterait le risque d'animations dupliquées.
 
-### Régression
+### Contrôle de non-régression
 
-Le test Playwright `tests/navigation-smoke.cjs` vérifie vingt allers-retours successifs (carte active, scroll, rendu de l'anneau, absence de calques résiduels) et le mode mouvement réduit.
+`tests/navigation-smoke.cjs` vérifie les vingt aller-retours, la progression de la caméra, le fait que carte et destination résident sur **une même surface**, le maintien de la carte active, du scroll, des frames Canvas et le repli mobile sans animations.
 
 ```bash
 npm install --no-save playwright@1.56.1
 npx playwright install chromium
 python3 -m http.server 8123
-# dans un second terminal
+# dans un autre terminal
 node tests/navigation-smoke.cjs
 ```
 
-Le workflow GitHub Actions `.github/workflows/navigation-smoke.yml` exécute le même test sur la branche concernée.
+Le workflow `.github/workflows/navigation-smoke.yml` lance également ce test sur GitHub Actions.
