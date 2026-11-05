@@ -1,6 +1,6 @@
 (() => {
   const canvas = document.querySelector('#portal');
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas?.getContext('2d');
   if (!ctx) return;
 
   const stage = document.querySelector('.experience');
@@ -11,7 +11,8 @@
   const state = { center: 0, open: 0, orbit: 0, reveal: 0, slide: 0 };
   const turn = Math.PI * 2;
   let width, height, phase = 0, previous = 0, speed = 0;
-  let timeline, frame, active = -1, inView = true;
+  let timeline, context, frame = 0, active = -1, inView = true;
+  let paused = false;
   let centers = [];
   let lastRing;
   const particles = Array.from({ length: 64 }, (_, i) => ({
@@ -155,17 +156,17 @@
     controls.querySelector('[data-step="1"]').disabled = selected === cards.length - 1;
   }
 
-  function goTo(index) {
+  function goTo(index, immediate = false) {
     if (!timeline) return;
     const target = gsap.utils.clamp(0, cards.length - 1, index);
     const trigger = timeline.scrollTrigger;
     // La phase horizontale occupe les deux dernières unités de la timeline.
-    window.scrollTo({ top: trigger.start + (trigger.end - trigger.start) * (5 + target / Math.max(1, cards.length - 1) * 2) / 7, behavior: 'smooth' });
+    window.scrollTo({ top: trigger.start + (trigger.end - trigger.start) * (5 + target / Math.max(1, cards.length - 1) * 2) / 7, behavior: immediate ? 'instant' : 'smooth' });
   }
 
   function setup() {
-    timeline?.scrollTrigger.kill();
-    timeline?.kill();
+    context?.revert(); // Revert ONLY this view's GSAP timeline and ScrollTrigger.
+    context = null;
     timeline = null;
     document.documentElement.classList.remove('enhanced');
     Object.assign(state, { center: 0, open: 0, orbit: 0, reveal: 0, slide: 0 });
@@ -181,6 +182,7 @@
       gsap.registerPlugin(ScrollTrigger);
       document.documentElement.classList.add('enhanced');
       cards.forEach(card => { card.inert = true; });
+      context = gsap.context(() => {
       timeline = gsap.timeline({
         defaults: { ease: 'power4.inOut' },
         scrollTrigger: {
@@ -200,6 +202,7 @@
         .to('.catalogue-heading', { opacity: 1, duration: 1 }, 4)
         .to(controls, { opacity: 1, duration: 0.5 }, 4.5)
         .to(state, { slide: cards.length - 1, duration: 2 }, 5);
+      }, stage);
       ScrollTrigger.refresh();
     }
     resize();
@@ -237,7 +240,36 @@
     touchStart = null;
   }, { passive: true });
 
+  function snapshot() {
+    return {
+      scrollY: window.scrollY,
+      progress: timeline?.scrollTrigger?.progress ?? null,
+      slide: Math.round(state.slide),
+      selected: cards[Math.round(state.slide)]?.dataset.project || 'rackflow',
+      viewportWidth: innerWidth,
+      viewportHeight: innerHeight
+    };
+  }
+
+  function restore(saved) {
+    if (!saved || !Number.isFinite(saved.scrollY)) return;
+    const trigger = timeline?.scrollTrigger;
+    const progress = Number.isFinite(saved.progress) ? Math.max(0, Math.min(1, saved.progress)) : null;
+    const targetScroll = trigger && progress !== null && saved.viewportHeight !== innerHeight
+      ? trigger.start + (trigger.end - trigger.start) * progress : saved.scrollY;
+    // Bypass animated scrolling during restoration, or scrub:1.2 causes a visible rewind.
+    window.scrollTo({ top: targetScroll, behavior: 'instant' });
+    if (trigger) {
+      if (progress !== null) timeline.progress(progress, true);
+      trigger.update();
+      layoutCards();
+    }
+    paint();
+  }
+
   function animate(now) {
+    frame = 0;
+    if (paused) return;
     const delta = Math.min((now - previous) / 1000 || 0, 0.05);
     previous = now;
     if (!document.hidden && inView) {
@@ -248,17 +280,51 @@
     }
     frame = requestAnimationFrame(animate);
   }
-  new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; }).observe(stage);
-  motion.addEventListener('change', setup);
+  function suspend() {
+    paused = true;
+    if (frame) cancelAnimationFrame(frame);
+    frame = 0;
+  }
+  function resume() {
+    paused = false;
+    previous = 0;
+    if (window.ScrollTrigger && timeline?.scrollTrigger) ScrollTrigger.refresh();
+    layoutCards();
+    paint();
+    if (!frame) frame = requestAnimationFrame(animate);
+  }
+  const observer = new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; });
+  observer.observe(stage);
+  motion.addEventListener('change', () => {
+    const saved = snapshot();
+    setup();
+    restore(saved);
+  });
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => { setup(); }, 180);
+    resizeTimer = setTimeout(() => {
+      const saved = snapshot();
+      setup();
+      restore(saved);
+    }, 180);
   });
-  window.addEventListener('pagehide', () => cancelAnimationFrame(frame));
+  // A page in the bfcache is not a freshly mounted page: revive the same RAF.
+  window.addEventListener('pagehide', suspend);
   window.addEventListener('pageshow', event => {
-    if (event.persisted) { previous = 0; frame = requestAnimationFrame(animate); }
+    if (event.persisted) resume();
   });
+  window.ProjectsPortal = { snapshot, restore, suspend, resume, goTo,
+    getCard: key => cards.find(c => c.dataset.project === key) || null,
+    get phase() { return phase; },
+    get frameActive() { return !!frame && !paused; } };
   setup();
+  try {
+    if (sessionStorage.getItem('projects-return-pending') === '1') {
+      const saved = JSON.parse(sessionStorage.getItem('projects-world-state') || 'null');
+      sessionStorage.removeItem('projects-return-pending');
+      restore(saved);
+    }
+  } catch (_) { sessionStorage.removeItem('projects-return-pending'); }
   frame = requestAnimationFrame(animate);
 })();
