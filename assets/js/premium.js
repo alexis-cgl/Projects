@@ -132,6 +132,7 @@
     route.camera.p=1;
     renderCamera();
     frame.style.opacity="1";
+    frame.style.pointerEvents="auto";
     route.visual.style.opacity="0";
     layer.style.pointerEvents="auto";
     layer.removeAttribute("inert");
