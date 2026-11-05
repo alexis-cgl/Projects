@@ -52,7 +52,7 @@
   }
   function drawCables() {
     if (view !== "rack") return;
-    const bounds = workspace.getBoundingClientRect();
+    const bounds = svg.getBoundingClientRect();
     svg.setAttribute("viewBox", "0 0 " + bounds.width + " " + bounds.height);
     svg.innerHTML = "";
     for (const cable of cables) {
