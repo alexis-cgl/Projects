@@ -1,26 +1,76 @@
 (() => {
   "use strict";
-  const year = document.querySelector("#year");
-  if (year) year.textContent = new Date().getFullYear();
+
+  // A deliberately small client-side route layer. Projects remains plain HTML;
+  // RackFlow lives in its own isolated document so its GSAP/Canvas lifecycle
+  // cannot leak into the already-mounted Projects portal.
   const cards = [...document.querySelectorAll(".project-card")];
   const motion = matchMedia("(prefers-reduced-motion: reduce)");
   const finePointer = matchMedia("(hover: hover) and (pointer: fine)");
-  let inTransition = false;
+  const href = new URL("./rackflow.html", location.href).href;
+  const HOME_STATE = "projects-world-state";
+  let route = null;
+  let transitioning = false;
+  let pendingOpen = false;
+  let originHref = location.href;
+  const initialState = history.state;
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
+  function portal() { return window.ProjectsPortal; }
+  function saveState() {
+    const state = portal()?.snapshot() || { scrollY: window.scrollY, slide: 0 };
+    try { sessionStorage.setItem(HOME_STATE, JSON.stringify(state)); } catch (_) {}
+    return state;
+  }
+  function restoreState(state) { if (state) portal()?.restore(state); }
+  function cloneCard(card) {
+    const rect = card.getBoundingClientRect();
+    const clone = card.cloneNode(true);
+    clone.classList.add("world-flight");
+    clone.removeAttribute("inert");
+    clone.querySelectorAll("a").forEach(a => { a.removeAttribute("href"); a.setAttribute("tabindex", "-1"); });
+    Object.assign(clone.style, {
+      position: "fixed", top: rect.top + "px", left: rect.left + "px",
+      width: rect.width + "px", height: rect.height + "px",
+      maxHeight: "none", transform: "none", opacity: "1",
+      filter: "none", overflow: "hidden", borderRadius: "27px", margin: "0"
+    });
+    const shell = clone.querySelector(".card-shell");
+    if (shell) { shell.style.transform = "none"; shell.style.transition = "none"; }
+    clone.setAttribute("aria-hidden", "true");
+    document.body.appendChild(clone);
+    return { clone, rect };
+  }
+  function decoration() {
+    const backdrop = document.createElement("div");
+    backdrop.className = "world-backdrop";
+    const stars = document.createElement("div");
+    stars.className = "world-stars";
+    for (let i = 0; i < 20; i++) {
+      const star = document.createElement("i");
+      star.style.left = (7 + (i * 37 % 84)) + "%";
+      star.style.top = (12 + (i * 43 % 76)) + "%";
+      stars.appendChild(star);
+    }
+    document.body.append(backdrop, stars);
+    return { backdrop, stars };
+  }
+
+  // Tilt acts on the inner surface, not the carousel's GSAP-transformed article.
   cards.forEach(card => {
     const shell = card.querySelector(".card-shell");
     if (!shell) return;
     let raf = 0;
     card.addEventListener("pointermove", event => {
-      if (!finePointer.matches || motion.matches || inTransition) return;
+      if (!finePointer.matches || motion.matches || route || transitioning) return;
       const rect = card.getBoundingClientRect();
       const px = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
       const py = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
-      card.style.setProperty("--mx", px * 100 + "%");
-      card.style.setProperty("--my", py * 100 + "%");
+      card.style.setProperty("--mx", (px * 100) + "%");
+      card.style.setProperty("--my", (py * 100) + "%");
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
-        shell.style.transform = "perspective(1200px) rotateX(" + ((0.5 - py) * 6).toFixed(2) + "deg) rotateY(" + ((px - 0.5) * 7).toFixed(2) + "deg) translateZ(8px) scale(1.018)";
+        shell.style.transform = "perspective(1200px) rotateX(" + ((.5 - py) * 6).toFixed(2) + "deg) rotateY(" + ((px - .5) * 7).toFixed(2) + "deg) translateZ(8px) scale(1.018)";
       });
     }, { passive: true });
     card.addEventListener("pointerleave", () => {
@@ -31,61 +81,225 @@
     });
   });
 
-  const rackLink = document.querySelector('[data-cinematic="rackflow"]');
-  if (!rackLink) return;
-  rackLink.addEventListener("click", event => {
-    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || inTransition) return;
-    if (motion.matches || !window.gsap || document.visibilityState === "hidden") return;
-    event.preventDefault();
-    inTransition = true;
-    const card = rackLink.closest(".project-card");
-    const rect = card.getBoundingClientRect();
-    const overlay = document.createElement("div");
-    overlay.className = "portal-overlay";
-    const vignette = document.createElement("div");
-    vignette.className = "portal-vignette";
-    const field = document.createElement("div");
-    field.className = "portal-particles";
-    document.body.append(overlay, field, vignette);
-    document.documentElement.classList.add("launching");
-    const clone = card.cloneNode(true);
-    clone.classList.add("portal-launch");
-    clone.removeAttribute("inert");
-    Object.assign(clone.style, {
-      position: "fixed", top: rect.top + "px", left: rect.left + "px",
-      width: rect.width + "px", height: rect.height + "px", margin: 0, opacity: 1,
-      transform: "none", filter: "none", maxHeight: "none", overflow: "hidden"
+  function targetCard() { return portal()?.getCard("rackflow") || document.querySelector(".rackflow-card"); }
+  async function ensureCardReady() {
+    if (!document.documentElement.classList.contains("enhanced")) return;
+    if (targetCard()?.classList.contains("active")) return;
+    portal()?.goTo(0);
+    await new Promise(resolve => {
+      const started = performance.now();
+      function check() {
+        if (targetCard()?.classList.contains("active") || performance.now() - started > 1700) resolve();
+        else requestAnimationFrame(check);
+      }
+      requestAnimationFrame(check);
     });
-    clone.querySelectorAll("a").forEach(link => link.removeAttribute("href"));
-    document.body.appendChild(clone);
-    const siblings = cards.filter(other => other !== card);
-    // Only animate the detached clone so the pinned GSAP carousel remains undisturbed.
-    for (let i = 0; i < 24; i++) {
-      const dot = document.createElement("i");
-      dot.style.left = (10 + (i * 43 % 80)) + "%";
-      dot.style.top = (10 + (i * 29 % 80)) + "%";
-      field.appendChild(dot);
-    }
-    const tl = gsap.timeline({
-      onComplete() {
-        sessionStorage.setItem("rackflow-enter", "1");
-        window.location.assign(rackLink.href);
+  }
+  function attachFrameNavigation(frame) {
+    let doc;
+    try { doc = frame.contentDocument; } catch (_) { return false; }
+    if (!doc?.querySelector(".rackflow-page .rack-hero") && !doc?.querySelector(".rack-hero")) return false;
+    doc.addEventListener("click", event => {
+      const a = event.target.closest("a[href]");
+      if (!a || event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const url = new URL(a.href, frame.contentWindow.location.href);
+      if (url.origin !== location.origin) return;
+      if (url.pathname.endsWith("/index.html") || (url.pathname.endsWith("/Projects/") && url.hash === "#catalogue")) {
+        event.preventDefault();
+        returnHome();
+      } else if (url.pathname.endsWith("/rackflow.html") && url.hash) {
+        // Hash scrolling inside an iframe shouldn't create extra browser-history entries.
+        const destination = doc.querySelector(url.hash);
+        if (destination) {
+          event.preventDefault();
+          destination.scrollIntoView({ behavior: motion.matches ? "instant" : "smooth" });
+        }
+      }
+    }, true);
+    doc.addEventListener("keydown", event => {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        event.preventDefault();
+        returnHome();
       }
     });
-    const targetW = Math.min(innerWidth * .68, 690);
-    const targetH = Math.min(innerHeight * .77, 670);
-    tl.to(overlay, { opacity: .76, duration: .24, ease: "power2.out" }, 0)
-      .to(siblings, { opacity: 0, duration: .25 }, 0)
-      .to(clone, { left: (innerWidth - targetW) / 2, top: (innerHeight - targetH) / 2,
-        width: targetW, height: targetH, borderRadius: 24, duration: .52, ease: "power3.inOut" }, .08)
-      .to(overlay, { opacity: 1, duration: .36 }, .42)
-      .to(clone, { scale: Math.max(innerWidth / targetW, innerHeight / targetH) * 2.25,
-        borderRadius: 0, filter: "blur(5px)", duration: .83, ease: "power4.in" }, .58)
-      .to(vignette, { opacity: 1, duration: .54 }, .73)
-      .to(field.children, { x: () => (Math.random() - .5) * innerWidth * 1.4,
-        y: () => (Math.random() - .5) * innerHeight, scale: 3, opacity: 0,
-        stagger: .014, duration: .78, ease: "power3.in" }, .64);
-    // The navigation is still usable if animations are interrupted.
-    window.addEventListener("pagehide", () => tl.kill(), { once: true });
+    return true;
+  }
+
+  async function loadRouteLayer() {
+    const layer = document.createElement("div");
+    layer.className = "world-route";
+    layer.setAttribute("aria-label", "Page projet RackFlow");
+    const frame = document.createElement("iframe");
+    frame.title = "RackFlow — expérience interactive";
+    frame.setAttribute("loading", "eager");
+    layer.appendChild(frame);
+    document.body.appendChild(layer);
+    const loaded = new Promise(resolve => {
+      const timeout = setTimeout(() => resolve(false), 6000);
+      frame.addEventListener("load", () => {
+        clearTimeout(timeout);
+        resolve(attachFrameNavigation(frame));
+      }, { once: true });
+      frame.addEventListener("error", () => { clearTimeout(timeout); resolve(false); }, { once: true });
+    });
+    frame.src = href;
+    return { layer, frame, loaded };
+  }
+
+  async function openRackFlow({ push = true } = {}) {
+    if (transitioning || route || pendingOpen) return;
+    pendingOpen = true;
+    const state = saveState();
+    if (push) originHref = location.href;
+    await ensureCardReady();
+    const card = targetCard();
+    if (!card) { pendingOpen = false; location.assign(href); return; }
+    const shell = card.querySelector(".card-shell");
+    if (shell) shell.style.transform = "";
+    const active = cloneCard(card);
+    const { backdrop, stars } = decoration();
+    const siblings = cards.filter(item => item !== card);
+    const siblingOpacity = siblings.map(el => Number(getComputedStyle(el).opacity));
+    const frameInfo = await loadRouteLayer();
+    route = { ...frameInfo, ...active, backdrop, stars, siblings, siblingOpacity, state, originHref };
+    transitioning = true;
+    pendingOpen = false;
+    document.documentElement.classList.add("world-navigating");
+    const frameReady = await frameInfo.loaded;
+    if (!frameReady) {
+      cleanupRoute();
+      try { sessionStorage.setItem("projects-return-pending", "1"); } catch (_) {}
+      location.assign(href);
+      return;
+    }
+
+    function done() {
+      active.clone.remove();
+      backdrop.remove();
+      stars.remove();
+      frameInfo.layer.style.opacity = "1";
+      frameInfo.layer.style.pointerEvents = "auto";
+      document.documentElement.classList.remove("world-navigating");
+      document.documentElement.classList.add("world-route-open");
+      portal()?.suspend();
+      if (push) history.pushState({ projectsRoute: "rackflow", originHref, state }, "", href);
+      try { frameInfo.frame.contentWindow.focus(); } catch (_) {}
+      transitioning = false;
+    }
+    if (motion.matches || !window.gsap) {
+      frameInfo.layer.style.opacity = "1";
+      done();
+      return;
+    }
+
+    gsap.set(frameInfo.layer, { opacity: 0 });
+    gsap.set(backdrop, { opacity: 0 });
+    gsap.set(stars.children, { opacity: 0, scale: .3 });
+    // One movement curve. The return plays its geometric reverse.
+    const tl = gsap.timeline({ onComplete: done });
+    const mid = { width: Math.min(innerWidth * .7, 720), height: Math.min(innerHeight * .76, 680) };
+    tl.to(backdrop, { opacity: .85, duration: .24 }, 0)
+      .to(siblings, { opacity: 0, duration: .24, ease: "power2.out" }, 0)
+      .to(active.clone, {
+        left: (innerWidth - mid.width) / 2, top: (innerHeight - mid.height) / 2,
+        width: mid.width, height: mid.height, duration: .48, ease: "power3.inOut"
+      }, .07)
+      .to(active.clone, {
+        left: 0, top: 0, width: innerWidth, height: innerHeight, borderRadius: 0,
+        duration: .67, ease: "power4.inOut"
+      }, .48)
+      .to(active.clone, { scale: 1.10, filter: "blur(3px)", duration: .28, ease: "power3.in" }, .99)
+      .to(frameInfo.layer, { opacity: 1, duration: .18 }, 1.06)
+      .to(active.clone, { opacity: 0, duration: .18 }, 1.06)
+      .to(backdrop, { opacity: 0, duration: .25 }, 1.06)
+      .to(stars.children, { opacity: .95, x: () => (Math.random() - .5) * 160,
+        y: () => (Math.random() - .5) * 160, scale: 2, stagger: .014, duration: .25 }, .8)
+      .to(stars.children, { opacity: 0, duration: .25 }, 1.08);
+  }
+
+  function cleanupRoute() {
+    if (!route) return;
+    route.layer?.remove();
+    route.clone?.remove();
+    route.backdrop?.remove();
+    route.stars?.remove();
+    document.documentElement.classList.remove("world-route-open", "world-navigating");
+    route = null;
+    transitioning = false;
+    pendingOpen = false;
+  }
+
+  function closeRackFlow() {
+    if (!route || transitioning) return;
+    transitioning = true;
+    document.documentElement.classList.remove("world-route-open");
+    document.documentElement.classList.add("world-navigating");
+    const { layer, siblings, siblingOpacity, state } = route;
+    restoreState(state);
+    const card = targetCard();
+    if (!card) { cleanupRoute(); portal()?.resume(); return; }
+    const destination = cloneCard(card);
+    const { backdrop, stars } = decoration();
+    // The iframe is left intact and visually contracts from the *current*
+    // RackFlow section, so the page itself appears to recede into the card.
+    route.clone = destination.clone;
+    route.backdrop = backdrop;
+    route.stars = stars;
+    layer.style.pointerEvents = "none";
+    const target = card.getBoundingClientRect();
+    const ratioX = target.width / innerWidth, ratioY = target.height / innerHeight;
+    gsap?.set?.(destination.clone, { opacity: 0 });
+    gsap?.set?.(backdrop, { opacity: 0 });
+    function done() {
+      cleanupRoute();
+      // Remove stale inline carousel fades, then ask the portal to repaint.
+      siblings.forEach(el => { el.style.opacity = ""; });
+      portal()?.resume();
+      portal()?.restore(state);
+      const focus = card.querySelector('[data-cinematic="rackflow"]');
+      focus?.focus({ preventScroll: true });
+    }
+    if (motion.matches || !window.gsap) { done(); return; }
+    gsap.set(layer, { transformOrigin: "top left", x: 0, y: 0, scaleX: 1, scaleY: 1 });
+    gsap.timeline({ onComplete: done })
+      .to(backdrop, { opacity: .80, duration: .25 }, 0)
+      .to(layer, { scale: .95, duration: .18, ease: "power3.out" }, .03)
+      .to(layer, { scaleX: ratioX, scaleY: ratioY, x: target.left, y: target.top,
+        borderRadius: 27, duration: .91, ease: "power4.inOut" }, .19)
+      .to(destination.clone, { opacity: 1, duration: .27 }, .89)
+      .to(layer, { opacity: 0, duration: .20 }, .92)
+      .to(siblings, { opacity: i => siblingOpacity[i], duration: .32, ease: "power2.out" }, .91)
+      .to(backdrop, { opacity: 0, duration: .35 }, 1.02)
+      .to(destination.clone, { opacity: 0, duration: .12 }, 1.19);
+  }
+
+  function returnHome() {
+    if (!route || transitioning) return;
+    if (history.state?.projectsRoute === "rackflow") {
+      history.back();
+    } else closeRackFlow();
+  }
+  window.addEventListener("popstate", event => {
+    if (event.state?.projectsRoute === "rackflow") {
+      if (!route && !transitioning) openRackFlow({ push: false });
+    } else if (route) closeRackFlow();
   });
+
+  document.addEventListener("click", event => {
+    const link = event.target.closest('a[href]');
+    if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+    const url = new URL(link.href, location.href);
+    if (url.origin !== location.origin || url.pathname !== new URL(href).pathname) return;
+    event.preventDefault();
+    openRackFlow();
+  });
+
+  // BFCache navigation is rare in this SPA path, but never leave canvas paused.
+  window.addEventListener("pageshow", event => {
+    if (event.persisted && !route) portal()?.resume();
+  });
+  // Do not block browser back/forward when no project is open.
+  if (initialState?.projectsRoute === "rackflow" && location.pathname.endsWith("/rackflow.html")) {
+    openRackFlow({ push: false });
+  }
 })();
