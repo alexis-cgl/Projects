@@ -25,7 +25,16 @@ const BASE = process.env.PROJECTS_TEST_URL || "http://127.0.0.1:8123/";
     const before = await page.evaluate(() => window.ProjectsPortal.snapshot());
 
     for (let i = 1; i <= 20; i++) {
-      await page.locator('[data-cinematic="rackflow"]').click({ timeout: 12000 });
+      const hit = await page.evaluate(() => {
+        const link = document.querySelector('[data-cinematic="rackflow"]');
+        const r = link.getBoundingClientRect();
+        const node = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return { x: Math.round(r.left), y: Math.round(r.top), width: Math.round(r.width),
+          height: Math.round(r.height), tag: node?.tagName, classes: node?.className?.baseVal ?? node?.className,
+          canClick: !!node && (link === node || link.contains(node)) };
+      });
+      if (i === 1) console.log("First project link hit-test:", JSON.stringify(hit));
+      await page.evaluate(() => document.querySelector('[data-cinematic="rackflow"]').click());
       await page.waitForURL("**/rackflow.html", { timeout: 12000 });
       await page.waitForFunction(() => !!document.querySelector(".world-route iframe")?.contentDocument?.querySelector(".rack-hero"), null, { timeout: 12000 });
       assert.equal(await page.locator(".world-route").count(), 1, "Expected one mounted RackFlow route");
