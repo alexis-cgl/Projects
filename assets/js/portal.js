@@ -24,7 +24,13 @@
     // The hero continuously turns in 3D, independent of scroll.
     // Its autonomous spin blends away while the scroll-driven orientation
     // takes over; returning to the top blends it back in.
-    const hero = Math.max(0, 1 - state.center) ** 2;
+    // The scroll pin's 1.2s scrub can lag behind the actual scroll position.
+    // If the visitor is physically at the top, keep the torus spinning NOW,
+    // even while GSAP finishes easing the scroll-driven center state.
+    const hero = Math.max(
+      Math.max(0, 1 - state.center) ** 2,
+      Math.max(0, 1 - window.scrollY / Math.max(1, innerHeight))
+    );
     rotation.pitch = 0.90 - state.center * 0.65 + Math.sin(phase * 0.65) * 0.11 * hero;
     rotation.yaw = Math.sin(state.center * Math.PI) * 0.75 + phase * 0.90 * hero;
     rotation.roll = -0.34 + state.center * 0.52 + Math.sin(phase * 0.40) * 0.11 * hero;
