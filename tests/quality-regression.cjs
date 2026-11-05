@@ -93,7 +93,12 @@ const repoHome = new URL("./", BASE).href;
         await responsive.goto(new URL(pathname, repoHome).href, { waitUntil: "domcontentloaded" });
         const shape = await responsive.evaluate(() => {
           const title = document.querySelector("h1")?.getBoundingClientRect();
-          return { h1Right: title?.right, innerWidth, main: !!document.querySelector("main"), hasHorizontalScroll: document.documentElement.scrollWidth > innerWidth + 4 };
+          const overflow = [...document.querySelectorAll("body *")].map(el => {
+            const r = el.getBoundingClientRect();
+            return { tag: el.tagName.toLowerCase(), selector: (el.id ? "#" + el.id : el.className?.baseVal || el.className || "").toString().slice(0, 75),
+              left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width) };
+          }).filter(el => el.right > innerWidth + 5 && el.width > 0).slice(0, 12);
+          return { h1Right: title?.right, innerWidth, main: !!document.querySelector("main"), hasHorizontalScroll: document.documentElement.scrollWidth > innerWidth + 4, overflow };
         });
         assert(shape.main, pathname + " is missing main landmark at width " + width);
         assert(shape.h1Right <= shape.innerWidth + 8,
