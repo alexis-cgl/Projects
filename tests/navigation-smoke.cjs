@@ -21,6 +21,28 @@ const BASE = process.env.PROJECTS_TEST_URL || "http://127.0.0.1:8123/";
     await page.waitForFunction(() => !!window.ProjectsWorldCamera?.preloaded, null, { timeout: 12000 });
     assert.equal(await page.evaluate(() => window.ProjectsWorldCamera.surfaceCount), 1, "Preloaded camera plane missing");
 
+    // Regression: the hero torus must visibly rotate while the page stays
+    // completely at the top. Moving the meridians on a symmetric torus alone
+    // changed its phase, but left the on-screen shape looking stationary.
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await page.waitForFunction(() => window.scrollY === 0, null, { timeout: 5000 });
+    const initialHero = await page.evaluate(() => ({
+      yaw: window.ProjectsPortal.ringYaw,
+      phase: window.ProjectsPortal.phase,
+      frames: window.ProjectsPortal.paintCount
+    }));
+    await page.waitForTimeout(1000);
+    const movingHero = await page.evaluate(() => ({
+      yaw: window.ProjectsPortal.ringYaw,
+      phase: window.ProjectsPortal.phase,
+      frames: window.ProjectsPortal.paintCount
+    }));
+    assert(movingHero.frames > initialHero.frames + 3, "Hero Canvas should render continuously at scroll 0");
+    assert(Math.abs(movingHero.yaw - initialHero.yaw) > 0.18,
+      "Hero ring must visibly change 3D orientation at scroll 0: " +
+      JSON.stringify({ initialHero, movingHero }));
+    console.log("PASS rotating 3D torus at top of homepage", JSON.stringify({ initialHero, movingHero }));
+
     // Move to the same exact carousel position for all 20 visits.
     await page.evaluate(() => window.ProjectsPortal.goTo(0, true));
     await page.waitForFunction(() => document.querySelector(".rackflow-card")?.classList.contains("active"), null, { timeout: 12000 });
@@ -86,6 +108,14 @@ const BASE = process.env.PROJECTS_TEST_URL || "http://127.0.0.1:8123/";
     }
 
     assert.deepEqual(errors, [], "Uncaught browser exceptions");
+    // The autonomous 3D rotation also returns after exploring the carousel.
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await page.waitForFunction(() => window.scrollY === 0, null, { timeout: 5000 });
+    const yawBefore = await page.evaluate(() => window.ProjectsPortal.ringYaw);
+    await page.waitForTimeout(950);
+    const yawAfter = await page.evaluate(() => window.ProjectsPortal.ringYaw);
+    assert(Math.abs(yawAfter - yawBefore) > .15, "Top-of-page rotation failed to resume after 20 visits");
+    console.log("PASS top-of-page rotation after 20 visits");
     // Reduced-motion mode must keep a usable page and route.
     const quiet = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
     quiet.on("pageerror", error => errors.push(error.message));
