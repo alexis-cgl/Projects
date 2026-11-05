@@ -1,49 +1,63 @@
-# Projects
+# Mes Projets — Alexis Coniglio
 
-[![Projects, la collection web d’Alexis Coniglio](docs/banner.svg)](https://alexis-cgl.github.io/Projects/)
+Une vitrine de projets personnels et d'applications métier, avec une direction artistique noir spatial, violet néon et cyan électrique.
 
-Une vitrine pour parcourir mes réalisations web. Chaque fiche présente un projet, son usage et, lorsqu’il est disponible en ligne, un lien pour l’ouvrir.
+**[Voir le site ↗](https://alexis-cgl.github.io/Projects/)** · **[Explorer RackFlow ↗](https://alexis-cgl.github.io/Projects/rackflow.html)**
 
-**[Explorer la vitrine ↗](https://alexis-cgl.github.io/Projects/)** · [Parcourir le catalogue](https://alexis-cgl.github.io/Projects/#catalogue)
+## Expérience
 
-## Dans le catalogue
+- **Accueil / Mes Projets :** portail animé en Canvas 2D, scénarisé par GSAP ScrollTrigger, défilement horizontal du carrousel et rendu 3D léger des cartes.
+- **RackFlow :** transition cinématique à partir de la carte puis page projet immersive, storytelling, parcours guidé et simulation interactive.
+- **Démo RackFlow :** sélection des équipements, inspection, ajout/suppression d'appareils, création/suppression de liaisons entre ports, inventaire et réinitialisation.
+- **Portfolio :** uniquement un lien externe. **Le dépôt séparé \`alexis-cgl/alexis-coniglio\` n'est pas modifié par ce site.**
 
-| Projet | À découvrir |
-| --- | --- |
-| **RackFlow** | Un éditeur visuel pour organiser une baie réseau et suivre le câblage entre ses équipements. Sa fiche se déplie dans le catalogue. |
-| **[Portfolio ↗](https://alexis-cgl.github.io/alexis-coniglio/)** | Mon parcours en réseaux et télécommunications et mes réalisations en cybersécurité. |
+## Direction artistique
 
-## Repères dans le dépôt
+| Usage | Couleur |
+|---|---|
+| Fond spatial | \`#07070D\` |
+| Violet principal | \`#A78BFA\` |
+| Cyan d'interaction | \`#22D3EE\` |
+| Or discret / badges RackFlow | \`#FBBF24\` |
+
+Les fonds combinent des dégradés subtils, un quadrillage discret et des surfaces translucides. Les cartes possèdent des reflets et un léger tilt sur les appareils dotés d'un pointeur précis.
+
+## Organisation
 
 | Fichier | Rôle |
-| --- | --- |
-| [index.html](index.html) | Structure de la page, navigation et fiches du catalogue. |
-| [assets/css/styles.css](assets/css/styles.css) | Couleurs, mise en page mobile et styles du catalogue. |
-| [assets/js/portal.js](assets/js/portal.js) | Tore 3D projeté en canvas, transition au scroll et carrousel. |
-| [assets/vendor/](assets/vendor/) | GSAP 3.13.0 et ScrollTrigger, servis localement. |
-| [docs/banner.svg](docs/banner.svg) | Bannière de présentation du README. |
+|---|---|
+| \`index.html\` | Accueil « Mes Projets » et carrousel |
+| \`rackflow.html\` | Présentation et simulateur RackFlow |
+| \`assets/css/styles.css\` | Style global, cartes et accueil |
+| \`assets/css/rackflow.css\` | Style de la page et du simulateur |
+| \`assets/js/portal.js\` | Portail Canvas, ScrollTrigger et carrousel d'origine |
+| \`assets/js/premium.js\` | Tilt, halo dynamique et transition RackFlow |
+| \`assets/js/rackflow.js\` | Simulation autonome, inspection, câblage et visite guidée |
+| \`assets/vendor/\` | GSAP et ScrollTrigger distribués localement |
 
-## Modifier la vitrine
+## Lancer en local
 
-Ouvre `index.html` dans ton navigateur pour prévisualiser le site en local. Aucune installation ni compilation nécessaire.
+Ouvrez \`index.html\` dans un navigateur récent, ou servez le dossier avec un serveur local statique :
 
-Pour ajouter un projet, reprends un bloc `<article>` dans la grille de la section `#catalogue`. Renseigne sa catégorie, son nom, sa description et son lien. Pour présenter un projet sans adresse publique, utilise une fiche dépliable comme celle de RackFlow.
+\`\`\`bash
+python -m http.server 8000
+\`\`\`
 
-L’anneau respecte le réglage de réduction des animations de l’appareil. Le catalogue et ses liens restent utilisables lorsque JavaScript est désactivé.
+Puis visitez \`http://localhost:8000/\`.
 
-## Traverser le portail
+Aucun bundler ni framework lourd n'est nécessaire. Le site est compatible avec GitHub Pages.
 
-La section d’accueil reste épinglée pendant la transition. GSAP ScrollTrigger synchronise le déplacement de l’anneau, son ouverture et l’orbite des cartes avec le défilement. Les mouvements utilisent `power4.inOut`, avec un rattrapage progressif du scroll de 1,2 seconde.
+## Performance et accessibilité
 
-Le carrousel se parcourt au scroll, avec ses deux flèches, au clavier lorsqu’il a le focus ou par un glissement horizontal sur écran tactile. La carte centrale est active. Les cartes latérales restent en retrait jusqu’à leur sélection.
+Le portail 3D d'origine reste dessiné en Canvas 2D, avec un ratio de pixels limité et une animation suspendue quand la section est invisible. GSAP ne sert qu'aux animations pilotées par le scroll et aux transitions ciblées. Le survol des cartes utilise des transforms CSS et \`requestAnimationFrame\`.
 
-L’animation est désactivée si le visiteur demande une réduction des mouvements ou si la hauteur de sa fenêtre est inférieure à 580 pixels. Les projets sont alors présentés en grille. Si GSAP ne charge pas, cette présentation reste disponible.
+- En mode \`prefers-reduced-motion\`, pas de transition cinématique ni de carrousel épinglé : navigation et grille classiques.
+- Les liens, boutons et ports de la démo sont accessibles au clavier.
+- Si GSAP n'est pas disponible, l'expérience de navigation reste utilisable.
+- La fluidité réelle dépend de l'appareil et du navigateur : 60 FPS constitue un objectif, pas une garantie.
 
-### Réglages
+**La démo RackFlow est volontairement fictive et locale au navigateur** : pas de lecture des données réelles, ni d'accès au logiciel d'entreprise.
 
-Les étapes se trouvent dans la timeline de `assets/js/portal.js`. Les proportions du tore et la projection sur trois axes sont définies dans `project()`. La densité de pixels du canvas est limitée à 1,75 et le rendu est suspendu lorsque la section est hors écran ou l’onglet masqué.
+## Licence et dépendances
 
-### Bibliothèques
-
-La page utilise HTML, CSS, Canvas et GSAP. Les scripts sont inclus dans le dépôt pour que la visite ne dépende pas d’un CDN. Les conditions de GSAP sont référencées dans [assets/vendor/README.md](assets/vendor/README.md).
-
+Les licences et mentions d'attribution des versions locales de GSAP figurent dans \`assets/vendor/README.md\`.

@@ -3,72 +3,88 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#08070d">
-  <meta name="description" content="Explorez les outils et sites web d’Alexis Coniglio.">
-  <title>Projects — Alexis Coniglio</title>
+  <meta name="theme-color" content="#07070D">
+  <meta name="description" content="Mes Projets — des applications métier et des expériences web imaginées par Alexis Coniglio. Découvrez RackFlow et mon portfolio.">
+  <title>Mes Projets — Alexis Coniglio</title>
+  <link rel="icon" href="./assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./assets/css/styles.css">
   <script defer src="./assets/vendor/gsap.min.js"></script>
   <script defer src="./assets/vendor/ScrollTrigger.min.js"></script>
   <script defer src="./assets/js/portal.js"></script>
+  <script defer src="./assets/js/premium.js"></script>
 </head>
 <body>
   <a class="skip" href="#catalogue">Aller aux projets</a>
-  <header class="wrap" id="haut">
-    <a class="brand" href="#haut"><i aria-hidden="true"></i>Projects</a>
-    <nav aria-label="Navigation principale"><a href="#catalogue">Catalogue</a><a href="https://github.com/alexis-cgl">GitHub ↗</a></nav>
+  <header class="site-header" id="haut">
+    <div class="wrap header-inner">
+      <a class="brand" href="#haut" aria-label="Mes Projets, retour à l'accueil"><i aria-hidden="true"></i><span>AC<span class="brand-dot">.</span> <span class="brand-light">PROJECTS</span></span></a>
+      <nav aria-label="Navigation principale">
+        <a href="#catalogue">Les projets</a>
+        <a href="rackflow.html">RackFlow</a>
+        <a class="nav-github" href="https://github.com/alexis-cgl" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </div>
   </header>
-  <main>
+  <main id="main">
     <div class="experience">
       <canvas id="portal" aria-hidden="true"></canvas>
       <div class="hero wrap">
         <div class="intro">
-          <p class="label">Alexis Coniglio / Collection web</p>
-          <h1>Un autre<br>champ des<br><em>possibles.</em></h1>
-          <p class="lede">Des idées qui deviennent des outils.<br>Explorez mes projets, un univers à la fois.</p>
-          <a class="cta" href="#catalogue">Explorer les projets <span aria-hidden="true">↘</span></a>
+          <p class="label hero-label"><span class="status-light" aria-hidden="true"></span> ALEXIS CONIGLIO <span class="label-divider">/</span> DIGITAL LAB</p>
+          <h1>Mes Projets<span class="animated-dot">.</span></h1>
+          <p class="hero-subline">Du concept à l'expérience.</p>
+          <p class="lede">Des outils pensés pour résoudre de vrais problèmes.<br>Des interfaces conçues pour donner envie d'explorer.</p>
+          <a class="cta" href="#catalogue">Explorer l'univers <span class="cta-icon" aria-hidden="true">↘</span></a>
+          <div class="hero-index" aria-hidden="true"><span>01</span><span class="index-rule"></span><span>INNOVATION · DESIGN · ENGINEERING</span></div>
         </div>
-        <span class="coordinate" aria-hidden="true">01 — EXPLORATION<br>ENTREZ DANS L’UNIVERS</span>
+        <span class="coordinate" aria-hidden="true">EXPLORE THE UNKNOWN<br>48° / DIGITAL WORKSPACE</span>
       </div>
       <section id="catalogue" aria-labelledby="catalogue-title">
         <div class="catalogue-heading">
-          <p class="label">02 / De l’idée à l’interface</p>
-          <h2 id="catalogue-title">Les projets<span>.</span></h2>
+          <p class="label">02 / SELECTED WORKS</p>
+          <h2 id="catalogue-title">À découvrir<span class="animated-dot">.</span></h2>
+          <p>Une sélection de projets, chacun avec son propre univers.</p>
         </div>
         <div class="deck" role="region" aria-label="Carrousel de projets" tabindex="0">
-          
-            <article>
-              <div class="thumb" aria-hidden="true">
-                <div class="rack">
-                  <i></i>
-                  <i></i>
-                  <i></i>
-                  <i></i>
+          <article class="project-card rackflow-card" data-project="rackflow">
+            <div class="card-shell">
+              <div class="thumb thumb-rackflow" aria-hidden="true">
+                <div class="visual-grid"></div>
+                <div class="rack-preview">
+                  <span class="rack-preview-top"><b>RACKFLOW</b><i>LIVE PREVIEW</i></span>
+                  <div class="mini-rack"><span class="rack-unit unit-a"></span><span class="rack-unit unit-b"></span><span class="rack-unit unit-c"></span><span class="rack-unit unit-d"></span><span class="rack-unit unit-e"></span></div>
+                  <div class="rack-preview-cable"></div>
                 </div>
+                <span class="visual-chip">INTERACTIVE SYSTEM</span>
               </div>
               <div class="card">
-                <small>01 / Outil réseau</small>
-                <h3>RackFlow</h3>
-                <p>Un éditeur visuel pour organiser une baie réseau et représenter son câblage.</p>
-                <details>
-                  <summary>Découvrir le projet</summary>
-                  <p>Placez les équipements dans la baie et reliez leurs ports pour retrouver le parcours d’un câble sur le schéma.</p>
-                </details>
+                <div class="card-meta"><small>01 / NETWORK TOOL</small><span class="premium-badge">FEATURED <span aria-hidden="true">✦</span></span></div>
+                <h3>RackFlow<span class="title-dot">.</span></h3>
+                <p>Visualisez vos baies, organisez vos équipements et donnez du sens à chaque connexion.</p>
+                <div class="card-tags" aria-label="Catégories"><span>Network</span><span>Visualization</span><span>Web app</span></div>
+                <a class="discover" href="./rackflow.html" data-cinematic="rackflow"><span>Découvrir le projet</span><span class="discover-arrow" aria-hidden="true">↗</span></a>
               </div>
-            </article>
-            <article>
-              <div class="thumb" aria-hidden="true">
-                <div class="screen">
-                  • • •
-                  <b>&gt; ac_</b>
-                </div>
+            </div>
+          </article>
+          <article class="project-card" data-project="portfolio">
+            <div class="card-shell">
+              <div class="thumb thumb-portfolio" aria-hidden="true">
+                <div class="visual-grid"></div>
+                <div class="portfolio-preview"><span>AC<span class="title-dot">.</span></span><div class="preview-line long"></div><div class="preview-line mid"></div><div class="preview-line short"></div><div class="preview-pills"><i></i><i></i><i></i></div></div>
+                <span class="visual-chip">PERSONAL SPACE</span>
               </div>
               <div class="card">
-                <small>02 / Site personnel</small>
-                <h3>Portfolio</h3>
-                <p>Mon parcours en réseaux et télécommunications et mes réalisations en cybersécurité.</p>
-                <a href="https://alexis-cgl.github.io/alexis-coniglio/">Ouvrir le portfolio ↗</a>
+                <div class="card-meta"><small>02 / PERSONAL WEBSITE</small><span class="card-index">02 — 02</span></div>
+                <h3>Portfolio<span class="title-dot">.</span></h3>
+                <p>Mon parcours, mes expériences et ma vision de la cybersécurité, des systèmes et des réseaux.</p>
+                <div class="card-tags" aria-label="Catégories"><span>Cybersecurity</span><span>Infrastructure</span></div>
+                <a class="discover" href="https://alexis-cgl.github.io/alexis-coniglio/" target="_blank" rel="noopener noreferrer"><span>Ouvrir le portfolio</span><span class="discover-arrow" aria-hidden="true">↗</span></a>
               </div>
-            </article>
+            </div>
+          </article>
         </div>
         <div class="controls" hidden>
           <button type="button" data-step="-1" aria-label="Projet précédent">←</button>
@@ -76,10 +92,13 @@
           <button type="button" data-step="1" aria-label="Projet suivant">→</button>
         </div>
       </section>
-      <div class="scroll-note" aria-hidden="true"><span class="scroll-line"></span> DÉFILER POUR EXPLORER <span class="progress">01 / 03</span></div>
+      <div class="scroll-note" aria-hidden="true"><span class="scroll-line"></span> SCROLL TO DISCOVER <span class="progress">01 / 03</span></div>
     </div>
+    <section class="afterword wrap" aria-label="À propos du laboratoire">
+      <div><p class="label">CRAFTED WITH INTENTION</p><h2>Concevoir. Construire.<br><span>Faire la différence.</span></h2></div>
+      <p>Chaque projet commence par un besoin concret, puis prend vie à travers une interface soignée, des interactions utiles et une attention particulière au détail.</p>
+    </section>
   </main>
-  <footer class="wrap"><span>Alexis Coniglio <span class="muted">/ Projects</span></span><a href="#haut">Retour en haut ↑</a></footer>
+  <footer class="site-footer"><div class="wrap footer-inner"><span>© <span id="year">2026</span> Alexis Coniglio <span class="muted">/ Digital Lab</span></span><a href="#haut">Retour en haut ↑</a></div></footer>
 </body>
 </html>
-

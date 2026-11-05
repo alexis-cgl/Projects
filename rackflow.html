@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#07070D">
+  <meta name="description" content="RackFlow — explorez une démonstration interactive de l’éditeur de baies réseau et de gestion des connexions.">
+  <title>RackFlow — Expérience interactive | Mes Projets</title>
+  <link rel="icon" href="./assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/styles.css"><link rel="stylesheet" href="./assets/css/rackflow.css">
+  <script defer src="./assets/vendor/gsap.min.js"></script><script defer src="./assets/vendor/ScrollTrigger.min.js"></script>
+  <script defer src="./assets/js/rackflow.js"></script>
+</head>
+<body class="rackflow-page">
+<a class="skip" href="#presentation">Aller au contenu</a>
+<header class="site-header"><div class="wrap header-inner">
+  <a class="brand" href="index.html#catalogue"><i aria-hidden="true"></i><span>AC<span class="brand-dot">.</span> <span class="brand-light">PROJECTS</span></span></a>
+  <nav aria-label="Navigation principale"><a href="index.html#catalogue">← Tous les projets</a><a href="#demo">Démonstration</a><a class="nav-github" href="https://github.com/alexis-cgl" target="_blank" rel="noopener noreferrer">GitHub ↗</a></nav>
+</div></header>
+<main>
+  <section class="rack-hero wrap">
+    <div class="rack-hero-copy">
+      <p class="label hero-label"><span class="status-light"></span> PROJET VEDETTE / NETWORK VISUALIZATION</p>
+      <p class="rack-eyebrow">Une nouvelle perspective sur vos infrastructures.</p>
+      <h1>Rack<span>Flow</span><span class="animated-dot">.</span></h1>
+      <p class="rack-lead">Vos baies réseau.<br>Une vision sans limites.</p>
+      <p class="rack-summary">De la disposition des équipements au suivi des connexions, découvrez une approche visuelle de la documentation réseau.</p>
+      <div class="rack-hero-actions"><a class="cta" href="#demo">Tester la démo <span class="cta-icon">↘</span></a><a class="rack-text-link" href="#presentation">Explorer le concept ↓</a></div>
+      <div class="rack-hero-labels"><span>APPLICATION MÉTIER</span><span>DOCUMENTATION VISUELLE</span><span class="gold-label">✦ CONCEPT INTERACTIF</span></div>
+    </div>
+    <div class="hero-product" aria-label="Aperçu schématique de RackFlow">
+      <div class="product-glow"></div>
+      <div class="product-window">
+        <div class="window-head"><span class="window-dots"><i></i><i></i><i></i></span><span>rackflow / workspace</span><span class="window-live">● LIVE PREVIEW</span></div>
+        <div class="product-body"><aside><div class="sidebar-mini-title">WORKSPACE</div><div class="sidebar-mini-line active"></div><div class="sidebar-mini-line"></div><div class="sidebar-mini-line short"></div><div class="sidebar-mini-title second">INVENTORY</div><div class="sidebar-mini-line"></div><div class="sidebar-mini-line short"></div></aside>
+        <div class="product-canvas"><div class="product-rack"><div class="product-rail"></div><div class="product-u switch">SWITCH · 24 PORTS <b>● ● ● ● ● ● ● ●</b></div><div class="product-u server">HYPERV-01 <b>▰ ▰ ▰ ▰</b></div><div class="product-u patch">PATCH PANEL <b>● ● ● ● ● ● ● ●</b></div><div class="product-gap"></div><div class="product-u nas">STORAGE-NAS <b>▰ ▰</b></div></div><svg class="preview-cables" viewBox="0 0 300 350" aria-hidden="true"><path d="M215 87 C280 87 270 180 215 180" /><path d="M200 87 C260 87 255 135 205 135" /></svg></div></div>
+      </div>
+      <span class="float-callout callout-a">01 / DEVICE LAYOUT</span><span class="float-callout callout-b">02 / CABLE MAPPING</span>
+    </div>
+    <a class="scroll-indicator" href="#presentation">SCROLL TO EXPLORE <span>↓</span></a>
+  </section>
+  <section class="rack-section intro-section" id="presentation"><div class="wrap">
+    <p class="label section-kicker">01 / LE CONCEPT</p>
+    <h2>Voir le réseau.<br><span>Comprendre l'ensemble.</span></h2>
+    <div class="story-grid">
+      <article class="story-card"><span class="story-number">01 / PROBLÈME</span><h3>Des infrastructures complexes.</h3><p>Entre l'inventaire des équipements, l'organisation physique des baies et le câblage, la documentation peut vite devenir difficile à maintenir.</p></article>
+      <article class="story-card"><span class="story-number">02 / SOLUTION</span><h3>Un éditeur visuel.</h3><p>RackFlow rassemble représentation des baies, disposition des équipements et visualisation des connexions dans un espace cohérent.</p></article>
+      <article class="story-card"><span class="story-number">03 / BÉNÉFICE</span><h3>La clarté, au premier regard.</h3><p>Localiser un équipement, anticiper une modification ou suivre un câble devient une expérience visuelle plus intuitive.</p></article>
+    </div>
+  </div></section>
+  <section class="rack-section demo-section" id="demo"><div class="wrap">
+    <div class="demo-heading"><div><p class="label section-kicker">02 / INTERACTIVE PLAYGROUND</p><h2>À vous de <span>jouer.</span></h2><p class="demo-description">Une simulation indépendante du logiciel réel. Sélectionnez un équipement, ajoutez un appareil, ou reliez deux ports pour tester le concept.</p></div><span class="demo-badge"><span class="status-light"></span> SANDBOX MODE</span></div>
+    <div class="demo-app" aria-label="Simulation interactive de RackFlow">
+      <div class="demo-app-head"><div class="app-brand"><span class="app-brand-icon">R</span><div><strong>RackFlow</strong><small>DEMO WORKSPACE</small></div></div><div class="app-toolbar"><button type="button" id="addDevice">+ Ajouter un appareil</button><button type="button" id="resetDemo" class="quiet-btn">↺ Réinitialiser</button></div></div>
+      <div class="demo-app-main">
+        <aside class="demo-sidebar"><p class="sidebar-heading">NAVIGATION</p><button type="button" class="sidebar-tab selected" data-view="rack">▤ <span>Baie principale</span></button><button type="button" class="sidebar-tab" data-view="cables">⌁ <span>Connexions</span></button><button type="button" class="sidebar-tab" data-view="inventory">▦ <span>Inventaire</span></button><div class="sidebar-separator"></div><p class="sidebar-heading">EXPLORATEUR</p><div class="sidebar-tree"><span>⌄ &nbsp; Site principal</span><span>└ &nbsp; Datacenter A</span><span class="tree-active">◈ &nbsp; Rack 01</span></div><div class="demo-sidebar-bottom"><span class="status-light"></span> DEMO ACTIVE</div></aside>
+        <div class="demo-workspace"><div class="workspace-top"><div><small id="workspacePath">SITE PRINCIPAL / DATACENTER A</small><h3 id="workspaceTitle">Rack 01 <span class="rack-size">42U</span></h3></div><span class="workspace-hint" id="workspaceHint">Sélectionnez un équipement ou un port</span></div>
+          <div class="rack-stage" id="rackStage"><svg id="cableSvg" aria-hidden="true" preserveAspectRatio="none"></svg><div class="rack-cabinet" id="rackCabinet" aria-label="Baie réseau interactive"></div></div>
+          <div class="alternate-view" id="alternateView" hidden></div>
+          <div class="workspace-bottom"><span id="demoStatus" role="status" aria-live="polite">Sélectionnez un équipement pour inspecter ses propriétés.</span><span>SIMULATED / NO BACKEND</span></div>
+        </div>
+        <aside class="demo-inspector" id="demoInspector"><p class="sidebar-heading">INSPECTEUR <span>◈</span></p><div id="inspectorContent"><div class="empty-inspector"><span>⌖</span><p>Choisissez un équipement pour afficher ses détails.</p></div></div><div class="inspector-tip">ASTUCE : Cliquez sur deux ports pour simuler une liaison réseau.</div></aside>
+      </div>
+    </div>
+    <p class="demo-disclaimer">Cette interface est une démonstration visuelle fictive, sans connexion au logiciel RackFlow réel. Les données et équipements sont illustratifs.</p>
+  </div></section>
+  <section class="rack-section guided-section" id="visite"><div class="wrap">
+    <p class="label section-kicker">03 / LE PARCOURS</p><h2>Chaque détail.<br><span>Une intention.</span></h2>
+    <div class="feature-layout"><div class="feature-display"><div class="feature-visual"><div id="featureNumber">01</div><div class="feature-symbol" id="featureSymbol">▤</div><div class="feature-pulse"></div></div><p class="feature-caption" id="featureCaption">ÉQUIPEMENTS / STRUCTURE / DISPOSITION</p></div><div class="feature-list">
+      <button type="button" class="feature-step active" data-step="0"><span>01</span><span><strong>Organiser visuellement</strong><small>Représenter les racks et placer chaque équipement dans son contexte.</small></span><b>↗</b></button>
+      <button type="button" class="feature-step" data-step="1"><span>02</span><span><strong>Suivre les connexions</strong><small>Donner une lecture claire des liaisons entre les ports.</small></span><b>↗</b></button>
+      <button type="button" class="feature-step" data-step="2"><span>03</span><span><strong>Documenter durablement</strong><small>Centraliser les informations utiles à l'exploitation et aux évolutions.</small></span><b>↗</b></button>
+    </div></div>
+  </div></section>
+  <section class="rack-section final-section"><div class="wrap final-content"><p class="label">BUILT FOR CLARITY</p><h2>Quand la complexité<br>devient <span>lisible.</span></h2><p>Découvrez d'autres projets et applications conçus avec la même exigence.</p><a class="cta" href="index.html#catalogue">Tous les projets <span class="cta-icon">↗</span></a></div></section>
+</main>
+<footer class="site-footer"><div class="wrap footer-inner"><span>© <span id="year">2026</span> Alexis Coniglio <span class="muted">/ RackFlow Concept</span></span><a href="index.html#catalogue">Retour aux projets ↗</a></div></footer>
+</body></html>
