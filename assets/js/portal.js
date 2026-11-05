@@ -262,8 +262,13 @@
     // Bypass animated scrolling during restoration, or scrub:1.2 causes a visible rewind.
     window.scrollTo({ top: targetScroll, behavior: 'instant' });
     if (trigger) {
-      if (progress !== null) timeline.progress(progress, true);
+      // A scrub tween can keep advancing after history navigation and silently
+      // change state.slide on the next frame. Stop it before/after syncing.
+      trigger.getTween?.()?.kill();
       trigger.update();
+      trigger.getTween?.()?.kill();
+      if (progress !== null) timeline.progress(progress, true);
+      if (Number.isFinite(saved.slide)) state.slide = saved.slide;
       layoutCards();
     }
     paint();
@@ -289,6 +294,7 @@
   }
   function suspend() {
     paused = true;
+    timeline?.scrollTrigger?.getTween?.()?.kill();
     if (frame) cancelAnimationFrame(frame);
     frame = 0;
   }
@@ -296,7 +302,9 @@
     paused = false;
     previous = 0;
     inView = true; // Paint immediately while observers settle after return.
-    if (window.ScrollTrigger && timeline?.scrollTrigger) ScrollTrigger.refresh();
+    // This route retains the same home DOM and viewport. Refreshing every
+    // time rebuilds a pin spacer and can push the carousel to its final slide.
+    // Resize/setup and BFCache re-entry perform refresh when genuinely needed.
     layoutCards();
     paint();
     if (!frame) frame = requestAnimationFrame(animate);
