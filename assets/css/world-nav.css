@@ -1,37 +1,63 @@
-/* Reversible RackFlow camera route — isolated from the portfolio repository */
-.world-backdrop{
-  position:fixed;inset:0;z-index:10020;pointer-events:none;opacity:0;
-  background:radial-gradient(ellipse at center,rgba(83,48,144,.63),rgba(7,7,13,.98) 78%);
-  will-change:opacity;
-}
+/* Projects / RackFlow: one continuously interpolated camera surface. */
 .world-route{
-  position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:10021;
-  opacity:0;pointer-events:none;overflow:hidden;border-radius:0;
-  background:#07070D;transform-origin:0 0;will-change:transform,opacity;
-  box-shadow:0 35px 125px rgba(0,0,0,.75),0 0 90px rgba(167,139,250,.22);
+  position:fixed;
+  left:0;top:0;
+  width:100vw;height:100vh;height:100dvh;
+  z-index:10021;
+  opacity:0;pointer-events:none;overflow:hidden;
+  background:#07070D;
+  border:1px solid rgba(167,139,250,.36);
+  transform-origin:0 0;
+  will-change:transform,opacity,border-radius;
   contain:layout style;
+  isolation:isolate;
+  box-shadow:0 34px 130px rgba(0,0,0,.6),0 0 65px rgba(167,139,250,.20);
 }
 .world-route iframe{
-  display:block;width:100%;height:100%;border:0;outline:0;background:#07070D;
+  position:absolute;inset:0;
+  display:block;
+  width:100%;height:100%;
+  z-index:1;
+  border:0;outline:0;
+  background:#07070D;
   color-scheme:dark;
+  opacity:0;pointer-events:none;
+  will-change:opacity;
 }
-.world-flight{
-  z-index:10023!important;position:fixed!important;pointer-events:none!important;
-  touch-action:none;transform-origin:center center;will-change:top,left,width,height,transform,opacity,filter;
-  box-shadow:0 0 0 1px rgba(167,139,250,.5),0 0 90px rgba(167,139,250,.5),0 40px 140px #000a!important;
+/* The card and the destination are composed inside the SAME traveling plane. */
+.world-route .world-card-visual{
+  z-index:2!important;
+  transform-style:flat!important;
+  box-shadow:none!important;
+  backface-visibility:hidden;
+  will-change:opacity;
+  pointer-events:none!important;
 }
-.world-flight .card-shell{height:100%}
-.world-stars{position:fixed;inset:0;z-index:10024;pointer-events:none;overflow:hidden}
-.world-stars i{
-  display:block;position:absolute;width:3px;height:3px;opacity:0;
-  border-radius:50%;background:#22d3ee;box-shadow:0 0 9px #22d3ee,0 0 22px #a78bfa;
-  will-change:transform,opacity;
+.world-route .world-card-visual .card-shell{
+  overflow:hidden;
+  height:100%;
 }
-.world-navigating .site-header,.world-navigating .afterword,.world-navigating .site-footer,
-.world-route-open .site-header,.world-route-open .afterword,.world-route-open .site-footer {
-  pointer-events:none;
+.world-backdrop{
+  position:fixed;inset:0;z-index:10020;
+  pointer-events:none;opacity:0;
+  background:radial-gradient(ellipse at center,rgba(72,48,124,.4),rgba(7,7,13,.95) 84%);
+  will-change:opacity;
 }
-.world-route-open{scrollbar-gutter:stable}
-@media(prefers-reduced-motion:reduce){
-  .world-flight,.world-route,.world-stars i,.world-backdrop{transition:none!important;animation:none!important}
+.world-light{
+  position:fixed;inset:0;z-index:10022;
+  pointer-events:none;opacity:0;
+  background:radial-gradient(ellipse 58% 58% at 50% 48%,rgba(167,139,250,.18),transparent 72%);
+  will-change:opacity;
+}
+.world-navigating .site-header,
+.world-navigating .afterword,
+.world-navigating .site-footer,
+.world-route-open .site-header,
+.world-route-open .afterword,
+.world-route-open .site-footer{pointer-events:none;}
+.world-route-open{scrollbar-gutter:stable;}
+@media (prefers-reduced-motion:reduce){
+  .world-route,.world-route iframe,.world-card-visual,.world-backdrop,.world-light{
+    animation:none!important;transition:none!important;
+  }
 }

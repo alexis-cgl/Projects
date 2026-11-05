@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - feat/reversible-project-navigation
+      - feat/single-camera-project-portal
   pull_request:
   workflow_dispatch:
 jobs:
