@@ -112,6 +112,9 @@ const BASE = process.env.PROJECTS_TEST_URL || "http://127.0.0.1:8123/";
     // The autonomous 3D rotation also returns after exploring the carousel.
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
     await page.waitForFunction(() => window.scrollY === 0, null, { timeout: 5000 });
+    // ScrollTrigger deliberately eases the geometry back into the hero angle;
+    // let that scroll-dependent tilt finish before checking axis invariance.
+    await page.waitForTimeout(1800);
     const axisBefore = await page.evaluate(() => ({ spin: window.ProjectsPortal.ringSpin, yaw: window.ProjectsPortal.ringYaw }));
     await page.waitForTimeout(950);
     const axisAfter = await page.evaluate(() => ({ spin: window.ProjectsPortal.ringSpin, yaw: window.ProjectsPortal.ringYaw }));
