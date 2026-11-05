@@ -61,3 +61,30 @@ Le portail 3D d'origine reste dessiné en Canvas 2D, avec un ratio de pixels lim
 ## Licence et dépendances
 
 Les licences et mentions d'attribution des versions locales de GSAP figurent dans \`assets/vendor/README.md\`.
+
+## Navigation réversible RackFlow
+
+Le lien « Découvrir le projet » sur Projects ouvre RackFlow dans un calque plein écran **sans détruire l'accueil** :
+
+1. Le carrousel enregistre sa progression ScrollTrigger, la carte active et la position réelle du scroll dans `sessionStorage`.
+2. Une copie de la carte effectue un zoom vers un écran RackFlow préchargé et isolé dans un document embarqué de même origine.
+3. Les boutons de retour RackFlow et le bouton Retour du navigateur rembobinent le mouvement : écran → carte centrale → position initiale exacte.
+4. L'instance Canvas et sa timeline restent montées et suspendues pendant la visite ; la reprise relance une seule boucle de rendu, sans dupliquer les listeners.
+
+La page `rackflow.html` reste directement consultable, et son retour se comporte comme une navigation classique avec récupération de la position précédente lorsqu'elle est connue. Les préférences `prefers-reduced-motion` désactivent les mouvements complexes.
+
+**Architecture :** JavaScript natif, GSAP Context et Canvas 2D. Il n'y a pas de composants React ni Three.js dans ce site. Ajouter React Router, Zustand ou React Three Fiber n'apporterait pas de bénéfice pour ce cycle de vie et augmenterait les risques de remount.
+
+### Régression
+
+Le test Playwright `tests/navigation-smoke.cjs` vérifie vingt allers-retours successifs (carte active, scroll, rendu de l'anneau, absence de calques résiduels) et le mode mouvement réduit.
+
+```bash
+npm install --no-save playwright@1.56.1
+npx playwright install chromium
+python3 -m http.server 8123
+# dans un second terminal
+node tests/navigation-smoke.cjs
+```
+
+Le workflow GitHub Actions `.github/workflows/navigation-smoke.yml` exécute le même test sur la branche concernée.
