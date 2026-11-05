@@ -21,6 +21,13 @@
   }
   let route = null, busy = false, cameraCount = 0;
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  const homeRegions = [
+    document.querySelector("main"), document.querySelector(".site-header"),
+    document.querySelector(".site-footer")
+  ].filter(Boolean);
+  function setHomeInactive(inactive) {
+    homeRegions.forEach(region => { region.inert = inactive; });
+  }
   const portal = () => window.ProjectsPortal;
   const rackCard = () => portal()?.getCard("rackflow") || document.querySelector(".rackflow-card");
   const isRackRoute = url => url.origin === location.origin && url.pathname === rackURL.pathname;
@@ -57,6 +64,7 @@
   // Preload, never fetch during the actual camera flight.
   const layer=document.createElement("div");
   layer.className="world-route";
+  layer.setAttribute("role", "region");
   layer.setAttribute("aria-hidden","true");
   layer.setAttribute("aria-label","Page projet RackFlow");
   layer.setAttribute("inert","");
@@ -160,7 +168,10 @@
     busy=false;
     if(route.push)history.pushState({projectsRoute:"rackflow",state:route.state},"",rackURL.href);
     route.push=false;
-    try{frame.contentWindow.focus();}catch(_){}
+    try {
+      frame.contentWindow.focus();
+      frame.contentDocument?.querySelector('header nav a[href^="index.html"]')?.focus({ preventScroll: true });
+    } catch (_) {}
   }
   function completeExit(){
     if(!route)return;
@@ -184,6 +195,7 @@
     layer.style.removeProperty("--camera-energy");
     route.timeline?.kill();
     route=null;busy=false;
+    setHomeInactive(false);
     rackCard()?.querySelector('[data-cinematic="rackflow"]')?.focus({preventScroll:true});
   }
   async function ensureCardReady(){
@@ -232,6 +244,7 @@
     layer.setAttribute("inert","");
     document.documentElement.classList.add("world-navigating");
     portal()?.suspend();
+    setHomeInactive(true);
     renderCamera();
     card.style.visibility="hidden";
     if(motion.matches||!window.gsap){camera.p=1;completeEntry();return;}
