@@ -7,7 +7,7 @@ const { chromium } = require("playwright");
 const BASE = process.env.PROJECTS_TEST_URL || "http://127.0.0.1:8123/";
 
 (async () => {
-  const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
+  const browser = await chromium.launch({ headless: true, channel: process.env.PROJECTS_TEST_CHROME ? "chrome" : undefined, args: ["--no-sandbox"] });
   const errors = [];
   const page = await browser.newPage({
     viewport: { width: 1440, height: 900 },
