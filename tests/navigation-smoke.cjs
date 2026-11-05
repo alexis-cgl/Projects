@@ -18,6 +18,8 @@ const BASE = process.env.PROJECTS_TEST_URL || "http://127.0.0.1:8123/";
     await page.goto(BASE, { waitUntil: "domcontentloaded" });
     await page.waitForFunction(() => !!window.ProjectsPortal?.frameActive, null, { timeout: 12000 });
     assert(await page.locator(".rackflow-card").count(), "RackFlow card missing");
+    await page.waitForFunction(() => !!window.ProjectsWorldCamera?.preloaded, null, { timeout: 12000 });
+    assert.equal(await page.evaluate(() => window.ProjectsWorldCamera.surfaceCount), 1, "Preloaded camera plane missing");
 
     // Move to the same exact carousel position for all 20 visits.
     await page.evaluate(() => window.ProjectsPortal.goTo(0, true));
@@ -34,21 +36,40 @@ const BASE = process.env.PROJECTS_TEST_URL || "http://127.0.0.1:8123/";
           canClick: !!node && (link === node || link.contains(node)) };
       });
       if (i === 1) console.log("First project link hit-test:", JSON.stringify(hit));
+      const previousCameras = await page.evaluate(() => window.ProjectsWorldCamera.cameraCount);
       await page.evaluate(() => document.querySelector('[data-cinematic="rackflow"]').click());
+      if (i === 1) {
+        await page.waitForFunction(() => window.ProjectsWorldCamera?.progress > 0.23, null, { timeout: 12000 });
+        const shared = await page.evaluate(() => ({
+          p: window.ProjectsWorldCamera.progress,
+          cardInsideCamera: !!document.querySelector(".world-route > .world-card-visual"),
+          pageInsideCamera: !!document.querySelector(".world-route > iframe"),
+          pageOpacity: parseFloat(document.querySelector(".world-route > iframe")?.style.opacity || "0")
+        }));
+        assert(shared.cardInsideCamera && shared.pageInsideCamera, "Card and page must occupy the SAME camera plane");
+        assert(shared.pageOpacity > 0, "RackFlow content should emerge during, not after, the zoom");
+        console.log("PASS continuous camera handoff", JSON.stringify(shared));
+      }
       await page.waitForURL("**/rackflow.html", { timeout: 12000 });
       await page.waitForFunction(() => !!document.querySelector(".world-route iframe")?.contentDocument?.querySelector(".rack-hero"), null, { timeout: 12000 });
       assert.equal(await page.locator(".world-route").count(), 1, "Expected one mounted RackFlow route");
+      assert.equal(await page.evaluate(() => window.ProjectsWorldCamera.cameraCount), previousCameras + 1, "Expected one camera tween per entry");
+      assert.equal(await page.evaluate(() => window.ProjectsWorldCamera.progress), 1, "Camera must end at fullscreen");
       assert.equal(await page.evaluate(() => window.ProjectsPortal.frameActive), false, "Canvas should be suspended inside RackFlow");
 
       await page.frameLocator(".world-route iframe").locator('header nav a[href^="index.html"]').click({ timeout: 12000 });
-      await page.waitForFunction(() => !document.querySelector(".world-route") && !!window.ProjectsPortal?.frameActive, null, { timeout: 12000 });
+      await page.waitForFunction(() =>
+        document.querySelector(".world-route")?.getAttribute("aria-hidden") === "true" &&
+        !document.querySelector(".world-card-visual") &&
+        !!window.ProjectsPortal?.frameActive, null, { timeout: 12000 });
+      assert.equal(await page.evaluate(() => window.ProjectsWorldCamera.cameraCount), previousCameras + 1, "Return must reverse SAME timeline, not start another");
       const after = await page.evaluate(() => window.ProjectsPortal.snapshot());
 
       assert.equal(after.slide, before.slide, "Carousel active card drift at cycle " + i);
       assert(Math.abs(after.scrollY - before.scrollY) <= 8,
         "Scroll drift at cycle " + i + ": " + before.scrollY + " → " + after.scrollY);
       assert(await page.locator(".rackflow-card.active").count(), "Active card lost at cycle " + i);
-      assert.equal(await page.locator(".world-flight, .world-backdrop, .world-stars").count(), 0,
+      assert.equal(await page.locator(".world-card-visual, .world-backdrop, .world-light").count(), 0,
         "Transition DOM leaked at cycle " + i);
       const beforeTick = await page.evaluate(() => ({
         phase: window.ProjectsPortal.phase, paint: window.ProjectsPortal.paintCount
@@ -72,7 +93,9 @@ const BASE = process.env.PROJECTS_TEST_URL || "http://127.0.0.1:8123/";
     await quiet.locator('[data-cinematic="rackflow"]').click();
     await quiet.waitForURL("**/rackflow.html");
     await quiet.frameLocator(".world-route iframe").locator('header nav a[href^="index.html"]').click();
-    await quiet.waitForFunction(() => !document.querySelector(".world-route") && !!window.ProjectsPortal?.frameActive);
+    await quiet.waitForFunction(() =>
+      document.querySelector(".world-route")?.getAttribute("aria-hidden") === "true" &&
+      !!window.ProjectsPortal?.frameActive);
     assert.deepEqual(errors, [], "Reduced-motion uncaught errors");
     console.log("PASS 20 consecutive round-trips + reduced motion");
     await quiet.close();
