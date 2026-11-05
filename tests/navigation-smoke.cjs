@@ -26,22 +26,23 @@ const BASE = process.env.PROJECTS_TEST_URL || "http://127.0.0.1:8123/";
     // changed its phase, but left the on-screen shape looking stationary.
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
     await page.waitForFunction(() => window.scrollY === 0, null, { timeout: 5000 });
-    const initialHero = await page.evaluate(() => ({
+    const heroReading = () => ({
       yaw: window.ProjectsPortal.ringYaw,
-      phase: window.ProjectsPortal.phase,
+      pitch: window.ProjectsPortal.ringPitch,
+      roll: window.ProjectsPortal.ringRoll,
+      spin: window.ProjectsPortal.ringSpin,
       frames: window.ProjectsPortal.paintCount
-    }));
+    });
+    const initialHero = await page.evaluate(heroReading);
     await page.waitForTimeout(1000);
-    const movingHero = await page.evaluate(() => ({
-      yaw: window.ProjectsPortal.ringYaw,
-      phase: window.ProjectsPortal.phase,
-      frames: window.ProjectsPortal.paintCount
-    }));
+    const movingHero = await page.evaluate(heroReading);
     assert(movingHero.frames > initialHero.frames + 3, "Hero Canvas should render continuously at scroll 0");
-    assert(Math.abs(movingHero.yaw - initialHero.yaw) > 0.18,
-      "Hero ring must visibly change 3D orientation at scroll 0: " +
-      JSON.stringify({ initialHero, movingHero }));
-    console.log("PASS rotating 3D torus at top of homepage", JSON.stringify({ initialHero, movingHero }));
+    assert(Math.abs(movingHero.spin - initialHero.spin) > 0.3, "Torus material must spin at scroll 0");
+    for (const axis of ["yaw", "pitch", "roll"]) {
+      assert(Math.abs(movingHero[axis] - initialHero[axis]) < .025,
+        "Torus axis must NOT tumble at the hero: " + axis + " " + JSON.stringify({ initialHero, movingHero }));
+    }
+    console.log("PASS clockwise torus spin with fixed original hero axis", JSON.stringify({ initialHero, movingHero }));
 
     // Move to the same exact carousel position for all 20 visits.
     await page.evaluate(() => window.ProjectsPortal.goTo(0, true));
@@ -111,11 +112,12 @@ const BASE = process.env.PROJECTS_TEST_URL || "http://127.0.0.1:8123/";
     // The autonomous 3D rotation also returns after exploring the carousel.
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
     await page.waitForFunction(() => window.scrollY === 0, null, { timeout: 5000 });
-    const yawBefore = await page.evaluate(() => window.ProjectsPortal.ringYaw);
+    const axisBefore = await page.evaluate(() => ({ spin: window.ProjectsPortal.ringSpin, yaw: window.ProjectsPortal.ringYaw }));
     await page.waitForTimeout(950);
-    const yawAfter = await page.evaluate(() => window.ProjectsPortal.ringYaw);
-    assert(Math.abs(yawAfter - yawBefore) > .15, "Top-of-page rotation failed to resume after 20 visits");
-    console.log("PASS top-of-page rotation after 20 visits");
+    const axisAfter = await page.evaluate(() => ({ spin: window.ProjectsPortal.ringSpin, yaw: window.ProjectsPortal.ringYaw }));
+    assert(Math.abs(axisAfter.spin - axisBefore.spin) > .28, "Top-of-page surface spin failed to resume after 20 visits");
+    assert(Math.abs(axisAfter.yaw - axisBefore.yaw) < .025, "Torus axis tilted after returning to the top");
+    console.log("PASS correctly aligned top-of-page spin after 20 visits");
     // Reduced-motion mode must keep a usable page and route.
     const quiet = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
     quiet.on("pageerror", error => errors.push(error.message));
