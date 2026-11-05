@@ -1,0 +1,28 @@
+name: Projects navigation smoke test
+on:
+  push:
+    branches:
+      - main
+      - feat/reversible-project-navigation
+  pull_request:
+  workflow_dispatch:
+jobs:
+  twenty-round-trips:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser harness
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Serve static Projects site
+        run: |
+          python3 -m http.server 8123 --bind 127.0.0.1 >/tmp/projects-http.log 2>&1 &
+          sleep 2
+          curl -fsSI http://127.0.0.1:8123/index.html
+      - name: Verify 20 navigation cycles and accessibility fallback
+        run: node tests/navigation-smoke.cjs
