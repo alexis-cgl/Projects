@@ -18,3 +18,15 @@
 
 /* Ensure JavaScript-controlled demo panels are actually hidden. */
 [hidden]{display:none!important}
+
+/* On small screens the global Projects navigation hides its first link.
+   RackFlow must keep its return action visible at every breakpoint. */
+@media (max-width:420px) {
+  .rackflow-page .site-header nav a:first-child {
+    display:inline-flex;
+    align-items:center;
+    white-space:nowrap;
+    font-size:.69rem;
+  }
+  .rackflow-page .site-header nav .nav-github { display:none; }
+}
