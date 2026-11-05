@@ -99,6 +99,17 @@ Aucun composant React, hook, import Three.js, shader, texture ou dépendance Fra
 
 **React/TypeScript strict :** migration non recommandée à ce stade. Si le site évolue vers une application avec de nombreux composants, plusieurs équipes et des états complexes, réévaluer TypeScript et un routeur dédié avec une stratégie de migration progressive.
 
+## 7 bis. Dépendances et sécurité
+
+**GSAP / ScrollTrigger :** les distributions conservées dans le dépôt sont en version **3.13.0** (en-têtes officiels vérifiés). Au 5 novembre 2026, la version npm stable disponible est **3.15.1** : la dépendance est donc en retard sur les versions publiées. Selon la fiche Snyk du package **gsap@3.13.0**, aucune vulnérabilité directe connue n'y est répertoriée à cette date. Cela n'équivaudrait pas à une garantie d'absence de vulnérabilité.
+
+Sources publiques :
+- https://www.npmjs.com/package/gsap?activeTab=versions
+- https://security.snyk.io/package/npm/gsap/3.13.0
+- https://gsap.com/docs/v3/Installation/
+
+**Décision :** ne pas remplacer à l'aveugle les fichiers minifiés utilisés par la caméra sur un correctif de stabilité déjà validé. Prévoir une **pull request dédiée** mettant à jour GSAP et ScrollTrigger ensemble vers une version stable épinglée, avec les tests 20 cycles et le contrôle visuel avant fusion. Ne pas adopter de versions bêta.
+
 ## 8. Accessibilité et SEO
 
 **Corrigé :** landmarks explicites sur la démo, représentation illustrative annoncée comme image, état inert de l'arrière-plan en navigation immersive, restauration du focus après rerender et retour, gestion prefers-reduced-motion, titres et descriptions des deux pages, URLs canoniques, métadonnées Open Graph et Twitter, sitemap.xml.
