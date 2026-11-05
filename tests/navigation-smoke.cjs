@@ -41,11 +41,18 @@ const BASE = process.env.PROJECTS_TEST_URL || "http://127.0.0.1:8123/";
       assert(await page.locator(".rackflow-card.active").count(), "Active card lost at cycle " + i);
       assert.equal(await page.locator(".world-flight, .world-backdrop, .world-stars").count(), 0,
         "Transition DOM leaked at cycle " + i);
-      const phase0 = await page.evaluate(() => window.ProjectsPortal.phase);
-      await page.waitForTimeout(150);
-      const phase1 = await page.evaluate(() => window.ProjectsPortal.phase);
-      assert(phase1 > phase0, "Portal rotation stuck at cycle " + i);
-      console.log("PASS cycle", i, "scrollY", Math.round(after.scrollY), "phase", phase1.toFixed(3));
+      const beforeTick = await page.evaluate(() => ({
+        phase: window.ProjectsPortal.phase, paint: window.ProjectsPortal.paintCount
+      }));
+      await page.waitForTimeout(200);
+      const afterTick = await page.evaluate(() => ({
+        phase: window.ProjectsPortal.phase, paint: window.ProjectsPortal.paintCount,
+        inView: window.ProjectsPortal.inView,
+        active: window.ScrollTrigger?.getAll()?.some(t => t.isActive)
+      }));
+      assert(afterTick.phase > beforeTick.phase, "Portal rotation stuck at cycle " + i + ": " + JSON.stringify({ beforeTick, afterTick }));
+      assert(afterTick.paint > beforeTick.paint, "Portal rendering stuck at cycle " + i + ": " + JSON.stringify({ beforeTick, afterTick }));
+      console.log("PASS cycle", i, "scrollY", Math.round(after.scrollY), "phase", afterTick.phase.toFixed(3), "frames", afterTick.paint - beforeTick.paint);
     }
 
     assert.deepEqual(errors, [], "Uncaught browser exceptions");
