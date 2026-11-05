@@ -16,6 +16,8 @@
   let paintCount = 0;
   let centers = [];
   let lastRing;
+  let lastLayout = null;
+  const settleEase = window.gsap?.parseEase?.('power4.inOut') || (t => t);
   // Preserve the torus's designed axis. Its highlight travels around the
   // surface; the whole ring must NOT tumble or change its hero orientation.
   // Cache the scroll-driven orientation's trigonometry once per frame.
@@ -71,7 +73,7 @@
   function resize() {
     width = canvas.clientWidth;
     height = canvas.clientHeight;
-    const ratio = Math.min(devicePixelRatio || 1, 1.75);
+    const ratio = Math.min(devicePixelRatio || 1, width < 680 ? 1.5 : 1.75);
     canvas.width = Math.round(width * ratio);
     canvas.height = Math.round(height * ratio);
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
@@ -100,12 +102,20 @@
   }
 
   function wire(ring, offset, opacity) {
+    if (opacity <= 0) return;
+    // Adaptive mesh: comparable aesthetic with substantially less geometry
+    // on narrow screens and low-power mobile devices.
+    const mobile = width < 720;
+    const ribs = mobile ? 26 : 48;
+    const tubeSegments = mobile ? 18 : 32;
+    const latitudes = mobile ? 5 : 8;
+    const longitudeSegments = mobile ? 56 : 96;
     ctx.lineWidth = 0.8;
     ctx.strokeStyle = 'rgba(199,145,255,' + opacity + ')';
     ctx.beginPath();
-    for (let rib = 0; rib < 48; rib++) {
-      for (let segment = 0; segment <= 32; segment++) {
-        const [x, y] = project(rib * turn / 48, segment * turn / 32, offset);
+    for (let rib = 0; rib < ribs; rib++) {
+      for (let segment = 0; segment <= tubeSegments; segment++) {
+        const [x, y] = project(rib * turn / ribs, segment * turn / tubeSegments, offset);
         const px = ring.x + x * ring.size;
         const py = ring.y + y * ring.size;
         if (segment === 0) ctx.moveTo(px, py);
@@ -115,9 +125,9 @@
     ctx.stroke();
     ctx.beginPath();
     ctx.strokeStyle = 'rgba(199,145,255,' + opacity * 0.45 + ')';
-    for (let latitude = 0; latitude < 8; latitude++) {
-      for (let segment = 0; segment <= 96; segment++) {
-        const [x, y] = project(segment * turn / 96, latitude * turn / 8, offset);
+    for (let latitude = 0; latitude < latitudes; latitude++) {
+      for (let segment = 0; segment <= longitudeSegments; segment++) {
+        const [x, y] = project(segment * turn / longitudeSegments, latitude * turn / latitudes, offset);
         if (segment === 0) ctx.moveTo(ring.x + x * ring.size, ring.y + y * ring.size);
         else ctx.lineTo(ring.x + x * ring.size, ring.y + y * ring.size);
       }
@@ -167,8 +177,13 @@
 
   function layoutCards() {
     if (!timeline) return;
+    // Avoid triggering transforms, blur, z-index and accessibility writes
+    // 60 times per second when ScrollTrigger is completely stationary.
+    const next = [state.center, state.orbit, state.reveal, state.slide, width, height];
+    if (lastLayout && next.every((value, index) => value === lastLayout[index])) return;
+    lastLayout = next;
     const orbit = state.orbit;
-    const settle = gsap.parseEase('power4.inOut')(orbit);
+    const settle = settleEase(orbit);
     const gap = Math.min(width * 0.60, 440);
     const ready = orbit > 0.98;
     document.querySelector('.intro').inert = state.center > 0.5;
@@ -215,6 +230,7 @@
   }
 
   function setup() {
+    lastLayout = null;
     context?.revert(); // Revert ONLY this view's GSAP timeline and ScrollTrigger.
     context = null;
     timeline = null;
@@ -317,6 +333,7 @@
       trigger.getTween?.()?.kill();
       if (progress !== null) timeline.progress(progress, true);
       if (Number.isFinite(saved.slide)) state.slide = saved.slide;
+      lastLayout = null;
       layoutCards();
     }
     paint();
@@ -357,6 +374,7 @@
     // This route retains the same home DOM and viewport. Refreshing every
     // time rebuilds a pin spacer and can push the carousel to its final slide.
     // Resize/setup and BFCache re-entry perform refresh when genuinely needed.
+    lastLayout = null;
     layoutCards();
     paint();
     if (!frame) frame = requestAnimationFrame(animate);

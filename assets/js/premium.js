@@ -7,8 +7,30 @@
   const finePointer = matchMedia("(hover: hover) and (pointer: fine)");
   const rackURL = new URL("./rackflow.html", location.href);
   const HOME_STATE = "projects-world-state";
+  const homeTitle = document.title;
+  const description = document.querySelector('meta[name="description"]');
+  const homeDescription = description?.content;
+  const canonical = document.querySelector('link[rel="canonical"]');
+  const homeCanonical = canonical?.href;
+  const rackTitle = "RackFlow — Expérience interactive | Mes Projets";
+  const rackDescription = "Découvrez RackFlow : présentation et démonstration interactive des baies et connexions réseau.";
+  function setDocumentRoute(project) {
+    document.title = project ? rackTitle : homeTitle;
+    if (description) description.content = project ? rackDescription : homeDescription;
+    if (canonical) canonical.href = project ? rackURL.href : homeCanonical;
+    const nav = document.querySelector('.site-header nav a[href="rackflow.html"]');
+    if (project) nav?.setAttribute("aria-current", "page");
+    else nav?.removeAttribute("aria-current");
+  }
   let route = null, busy = false, cameraCount = 0;
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+  const homeRegions = [
+    document.querySelector("main"), document.querySelector(".site-header"),
+    document.querySelector(".site-footer")
+  ].filter(Boolean);
+  function setHomeInactive(inactive) {
+    homeRegions.forEach(region => { region.inert = inactive; });
+  }
   const portal = () => window.ProjectsPortal;
   const rackCard = () => portal()?.getCard("rackflow") || document.querySelector(".rackflow-card");
   const isRackRoute = url => url.origin === location.origin && url.pathname === rackURL.pathname;
@@ -22,7 +44,7 @@
   cards.forEach(card => {
     const shell = card.querySelector(".card-shell");
     if(!shell)return;
-    let raf=0;
+    let raf=0, resetTimer=0;
     card.addEventListener("pointermove",event=>{
       if(!finePointer.matches || motion.matches || busy || route)return;
       const r=card.getBoundingClientRect(); if(!r.width||!r.height)return;
@@ -30,6 +52,7 @@
       const py=Math.max(0,Math.min(1,(event.clientY-r.top)/r.height));
       card.style.setProperty("--mx",`${px*100}%`);
       card.style.setProperty("--my",`${py*100}%`);
+      clearTimeout(resetTimer);
       cancelAnimationFrame(raf);
       raf=requestAnimationFrame(()=>{shell.style.transform=`perspective(1200px) rotateX(${((.5-py)*6).toFixed(2)}deg) rotateY(${((px-.5)*7).toFixed(2)}deg) translateZ(8px) scale(1.018)`;});
     },{passive:true});
@@ -37,12 +60,14 @@
       cancelAnimationFrame(raf);
       shell.style.transition="transform 380ms cubic-bezier(.2,.8,.2,1)";
       shell.style.transform="";
-      setTimeout(()=>{shell.style.transition="";},390);
+      clearTimeout(resetTimer);
+      resetTimer=setTimeout(()=>{shell.style.transition="";},390);
     });
   });
   // Preload, never fetch during the actual camera flight.
   const layer=document.createElement("div");
   layer.className="world-route";
+  layer.setAttribute("role", "region");
   layer.setAttribute("aria-hidden","true");
   layer.setAttribute("aria-label","Page projet RackFlow");
   layer.setAttribute("inert","");
@@ -138,13 +163,18 @@
     layer.removeAttribute("inert");
     layer.setAttribute("aria-hidden","false");
     frame.removeAttribute("tabindex");
+    try { frame.contentWindow.ProjectsRackFlow?.setActive(true); } catch (_) {}
+    setDocumentRoute(true);
     document.documentElement.classList.remove("world-navigating");
     document.documentElement.classList.add("world-route-open");
     route.open=true;
     busy=false;
     if(route.push)history.pushState({projectsRoute:"rackflow",state:route.state},"",rackURL.href);
     route.push=false;
-    try{frame.contentWindow.focus();}catch(_){}
+    try {
+      frame.contentWindow.focus();
+      frame.contentDocument?.querySelector('header nav a[href^="index.html"]')?.focus({ preventScroll: true });
+    } catch (_) {}
   }
   function completeExit(){
     if(!route)return;
@@ -154,6 +184,8 @@
     portal()?.restore(state);
     card.style.visibility=savedVisibility;
     siblings.forEach((node,i)=>{node.style.opacity=siblingInlineOpacity[i];});
+    try { frame.contentWindow.ProjectsRackFlow?.setActive(false); } catch (_) {}
+    setDocumentRoute(false);
     frame.style.opacity="0";
     layer.style.opacity="0";
     layer.style.pointerEvents="none";
@@ -166,6 +198,7 @@
     layer.style.removeProperty("--camera-energy");
     route.timeline?.kill();
     route=null;busy=false;
+    setHomeInactive(false);
     rackCard()?.querySelector('[data-cinematic="rackflow"]')?.focus({preventScroll:true});
   }
   async function ensureCardReady(){
@@ -214,6 +247,7 @@
     layer.setAttribute("inert","");
     document.documentElement.classList.add("world-navigating");
     portal()?.suspend();
+    setHomeInactive(true);
     renderCamera();
     card.style.visibility="hidden";
     if(motion.matches||!window.gsap){camera.p=1;completeEntry();return;}
@@ -246,8 +280,16 @@
     if(!isRackRoute(url))return;
     event.preventDefault();openRackFlow();
   });
-  window.addEventListener("pageshow",event=>{if(event.persisted&&!route)portal()?.resume();});
-  window.addEventListener("pagehide",()=>{if(route?.timeline?.isActive())route.timeline.pause();});
+  window.addEventListener("pageshow",event=>{
+    if (!event.persisted) return;
+    // BFCache can restore a page while a camera flight was in progress.
+    // Resume the same timeline instead of leaving the route permanently busy.
+    if (route?.timeline?.paused() && busy) route.timeline.resume();
+    else if (!route) portal()?.resume();
+  });
+  window.addEventListener("pagehide",()=>{
+    if (route?.timeline?.isActive()) route.timeline.pause();
+  });
   window.ProjectsWorldCamera={
     get progress(){return route?.camera.p??0;},
     get open(){return !!route?.open;},

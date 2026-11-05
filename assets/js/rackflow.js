@@ -3,18 +3,15 @@
   const year = document.getElementById("year");
   if (year) year.textContent = new Date().getFullYear();
   const reduce = matchMedia("(prefers-reduced-motion: reduce)");
-  if (sessionStorage.getItem("rackflow-enter") === "1") {
-    sessionStorage.removeItem("rackflow-enter");
-    if (!reduce.matches && window.gsap) {
-      gsap.fromTo(".rack-hero-copy", { opacity: 0, y: 35, scale: .95 }, { opacity: 1, y: 0, scale: 1, duration: 1.1, ease: "power3.out" });
-      gsap.fromTo(".product-window", { opacity: 0, scale: 1.35, filter: "blur(12px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 1.15, ease: "power3.out" });
-    }
-  }
+  // In the shared camera, RackFlow is preloaded offscreen. Do not run its
+  // ScrollTriggers or SVG redraws until the parent actually opens the room.
+  const embedded = window.parent !== window;
+  let pageActive = !embedded;
   let gsapContext;
   function mountScrollAnimations() {
     gsapContext?.revert();
     gsapContext = null;
-    if (reduce.matches || !window.gsap || !window.ScrollTrigger) return;
+    if (!pageActive || reduce.matches || !window.gsap || !window.ScrollTrigger) return;
     gsap.registerPlugin(ScrollTrigger);
     gsapContext = gsap.context(() => {
       gsap.utils.toArray(".story-card").forEach((card, i) => {
@@ -29,11 +26,18 @@
     }, document.body);
     ScrollTrigger.refresh();
   }
-  mountScrollAnimations();
+  if (pageActive) mountScrollAnimations();
   reduce.addEventListener("change", mountScrollAnimations);
-  window.addEventListener("pagehide", () => gsapContext?.revert());
+  window.addEventListener("pagehide", () => {
+    gsapContext?.revert();
+    gsapContext = null;
+    stopCableMonitoring();
+  });
   window.addEventListener("pageshow", event => {
-    if (event.persisted) mountScrollAnimations();
+    if (event.persisted && pageActive) {
+      mountScrollAnimations();
+      startCableMonitoring();
+    }
   });
   // Direct bookmarks and reloads do not have a mounted Projects route.
   // Preserve the last carousel state for a graceful normal-page fallback.
@@ -79,11 +83,13 @@
       devices = devices.filter(d => d.id !== selected);
       cables = cables.filter(c => !c.from.startsWith(selected + ":") && !c.to.startsWith(selected + ":"));
       selected = null; pending = null; say("Équipement supprimé de la simulation."); render();
+      document.getElementById("addDevice")?.focus({ preventScroll: true });
     });
   }
   function drawCables() {
-    if (view !== "rack") return;
+    if (!pageActive || view !== "rack") return;
     const bounds = svg.getBoundingClientRect();
+    if (!bounds.width || !bounds.height) return;
     svg.setAttribute("viewBox", "0 0 " + bounds.width + " " + bounds.height);
     svg.innerHTML = "";
     for (const cable of cables) {
@@ -101,7 +107,7 @@
   }
   function renderRack() {
     cabinet.innerHTML = devices.map(d => '<div class="demo-device' + (selected === d.id ? " selected" : "") + '" data-device="' + d.id + '" role="group" aria-label="' + escapeHtml(d.name) + '"><button type="button" class="device-name" data-select="' + d.id + '">' + escapeHtml(d.name) + '</button><span class="device-ports">' + Array.from({ length: d.ports }, (_, i) => { const key = d.id + ":" + i; return '<button type="button" class="port-button' + (pending === key ? " selected" : "") + (isConnected(key) ? " connected" : "") + '" data-port="' + key + '" aria-label="' + escapeHtml(d.name) + ', port ' + (i + 1) + '" aria-pressed="' + (pending === key) + '" title="' + escapeHtml(d.name) + ' / P' + (i + 1) + '"></button>'; }).join("") + '</span></div>').join("") + '<div class="rack-empty-space" aria-hidden="true"></div>';
-    requestAnimationFrame(drawCables);
+    scheduleCables();
   }
   function renderAlternate() {
     if (view === "rack") return;
@@ -112,6 +118,9 @@
     }
   }
   function render() {
+    const focused = document.activeElement;
+    const focusedPort = cabinet.contains(focused) ? focused?.dataset.port : null;
+    const focusedDevice = cabinet.contains(focused) ? focused?.dataset.select : null;
     document.querySelectorAll(".sidebar-tab").forEach(tab => { const active = tab.dataset.view === view; tab.classList.toggle("selected", active); tab.setAttribute("aria-pressed", String(active)); });
     workspace.hidden = view !== "rack";
     alternate.hidden = view === "rack";
@@ -120,6 +129,14 @@
     hint.textContent = view === "rack" ? "Sélectionnez un équipement ou un port" : "ESPACE DE DÉMONSTRATION";
     if (view === "rack") renderRack(); else renderAlternate();
     inspect();
+    // Rendering a fresh rack replaces its buttons. Restore keyboard focus
+    // to the equivalent port/device rather than dropping it on <body>.
+    const focusTarget = focusedPort
+      ? [...cabinet.querySelectorAll("[data-port]")].find(el => el.dataset.port === focusedPort)
+      : focusedDevice
+        ? [...cabinet.querySelectorAll("[data-select]")].find(el => el.dataset.select === focusedDevice)
+        : null;
+    focusTarget?.focus({ preventScroll: true });
   }
   cabinet.addEventListener("click", event => {
     const port = event.target.closest("[data-port]");
@@ -154,9 +171,43 @@
     devices = seed.map(d => ({ ...d })); cables = [{ from: "1:0", to: "2:0" }, { from: "1:1", to: "3:0" }];
     nextId = 5; selected = null; pending = null; view = "rack"; say("Démonstration réinitialisée."); render();
   });
-  const observer = new ResizeObserver(() => { if (view === "rack") drawCables(); });
-  observer.observe(workspace);
-  window.addEventListener("scroll", () => { if (view === "rack") requestAnimationFrame(drawCables); }, { passive: true });
+  let drawFrame = 0;
+  const observer = new ResizeObserver(scheduleCables);
+  function scheduleCables() {
+    if (!pageActive || view !== "rack" || drawFrame) return;
+    drawFrame = requestAnimationFrame(() => {
+      drawFrame = 0;
+      drawCables();
+    });
+  }
+  function startCableMonitoring() {
+    if (!pageActive) return;
+    observer.observe(workspace);
+    window.removeEventListener("scroll", scheduleCables);
+    window.addEventListener("scroll", scheduleCables, { passive: true });
+    scheduleCables();
+  }
+  function stopCableMonitoring() {
+    observer.disconnect();
+    window.removeEventListener("scroll", scheduleCables);
+    if (drawFrame) cancelAnimationFrame(drawFrame);
+    drawFrame = 0;
+  }
+  function setActive(value) {
+    const next = Boolean(value);
+    if (next === pageActive) return;
+    pageActive = next;
+    if (next) {
+      mountScrollAnimations();
+      startCableMonitoring();
+      requestAnimationFrame(() => window.ScrollTrigger?.refresh());
+    } else {
+      gsapContext?.revert();
+      gsapContext = null;
+      stopCableMonitoring();
+    }
+  }
+  window.ProjectsRackFlow = { setActive, get active() { return pageActive; } };
   const features = [
     { number: "01", icon: "▤", caption: "ÉQUIPEMENTS / STRUCTURE / DISPOSITION" },
     { number: "02", icon: "⌁", caption: "PORTS / CONNEXIONS / TRAÇABILITÉ" },
@@ -167,11 +218,13 @@
     document.querySelectorAll(".feature-step").forEach(node => node.classList.toggle("active", node === button));
     const symbol = document.getElementById("featureSymbol");
     if (window.gsap && !reduce.matches) {
+      gsap.killTweensOf(symbol);
       gsap.fromTo(symbol, { opacity: .25, y: 15, rotateY: -20 }, { opacity: 1, y: 0, rotateY: 0, duration: .5, ease: "power3.out" });
     }
     symbol.textContent = feature.icon;
     document.getElementById("featureNumber").textContent = feature.number;
     document.getElementById("featureCaption").textContent = feature.caption;
   }));
+  if (pageActive) startCableMonitoring();
   render();
 })();
