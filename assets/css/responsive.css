@@ -154,6 +154,10 @@ body { min-width:280px; }
   .rackflow-page .alternate-row { align-items:flex-start; overflow-wrap:anywhere; }
   .rackflow-page .feature-step { padding:18px 14px; }
 }
+@media (max-width:420px) {
+  /* Restore the Projects link hidden by the legacy narrow-screen stylesheet. */
+  .site-header nav a:first-child { display:inline-flex; }
+}
 @media (max-width:375px) {
   .wrap { width:calc(100% - 28px); }
   .site-header nav { gap:8px; }
