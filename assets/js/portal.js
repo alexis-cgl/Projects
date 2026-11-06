@@ -236,7 +236,12 @@
     timeline = null;
     document.documentElement.classList.remove('enhanced');
     Object.assign(state, { center: 0, open: 0, orbit: 0, reveal: 0, slide: 0 });
-    const animated = !motion.matches && window.gsap && window.ScrollTrigger && innerHeight >= 580;
+    // Keep the pinned cinematic on portrait phones and compact landscape
+    // screens. Extremely short viewports still use an accessible scrolling
+    // grid; the Canvas ring itself remains animated there.
+    const compactLandscape = innerWidth > innerHeight && innerWidth >= 600 && innerHeight >= 350;
+    const animated = !motion.matches && window.gsap && window.ScrollTrigger &&
+      (innerHeight >= 430 || compactLandscape);
     if (window.gsap) gsap.set([cards, '.intro', '.coordinate', '.catalogue-heading', controls], { clearProps: 'all' });
     cards.forEach(card => { card.inert = false; card.classList.remove('active'); });
     document.querySelector('.intro').inert = false;
@@ -392,13 +397,32 @@
     restore(saved);
   });
   let resizeTimer;
+  let observedWidth = innerWidth;
+  let observedHeight = innerHeight;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
+      const nextWidth = innerWidth, nextHeight = innerHeight;
+      const widthChanged = Math.abs(nextWidth - observedWidth) > 2;
+      const heightChanged = Math.abs(nextHeight - observedHeight) > 2;
+      if (!widthChanged && !heightChanged) return;
+      observedWidth = nextWidth;
+      observedHeight = nextHeight;
+      // Safari / Chrome mobile collapse their URL bars on scroll. A height-
+      // only resize is NOT a device rotation: rebuilding ScrollTrigger here
+      // destroys the animated camera and loses the selected project.
+      const mobileChrome = matchMedia('(pointer:coarse)').matches;
+      if (!widthChanged && mobileChrome) {
+        resize();
+        lastLayout = null;
+        layoutCards();
+        paint();
+        return;
+      }
       const saved = snapshot();
       setup();
       restore(saved);
-    }, 180);
+    }, 220);
   });
   // A page in the bfcache is not a freshly mounted page: revive the same RAF.
   window.addEventListener('pagehide', suspend);
