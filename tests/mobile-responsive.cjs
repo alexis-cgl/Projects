@@ -16,7 +16,6 @@ const cases=[
   {name:"iPad",engine:"webkit",width:768,height:1024,roundTrips:1},
   {name:"Narrow phone",engine:"chromium",width:320,height:568,roundTrips:1}
 ];
-const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function inspectOverflow(page,context){
   const result=await page.evaluate(()=>{
     const width=innerWidth;
@@ -48,7 +47,12 @@ async function inspectOverflow(page,context){
        await inspectOverflow(page,spec.name+" home top");
        const phase0=await page.evaluate(()=>window.ProjectsPortal.phase);
        const paint0=await page.evaluate(()=>window.ProjectsPortal.paintCount);
-       await page.waitForTimeout(230);
+       // WebKit can take longer to start its first foreground animation frame
+       // under CI load; test eventual frame advancement, not a fixed 230 ms.
+       await page.waitForFunction(({phase0,paint0})=>
+         window.ProjectsPortal.phase>phase0 &&
+         window.ProjectsPortal.paintCount>paint0,
+         {phase0,paint0},{timeout:5000});
        const animated=await page.evaluate(()=>({phase:window.ProjectsPortal.phase,paint:window.ProjectsPortal.paintCount}));
        if(!(animated.phase>phase0 && animated.paint>paint0)){
          const diag=await page.evaluate(()=>({
@@ -101,7 +105,7 @@ async function inspectOverflow(page,context){
          assert(inner.scrollWidth<=inner.viewport+5,spec.name+": RackFlow iframe horizontal overflow "+JSON.stringify(inner));
          const port=frame.locator('[data-port="1:0"]');
          const size=await port.boundingBox();
-         assert(size&&size.width>=20&&size.height>=20,spec.name+": rack ports are too small for touch");
+         assert(size&&size.width>=24&&size.height>=24,spec.name+": rack ports are too small for touch");
          await back.tap({timeout:14000});
          await page.waitForFunction(()=>!window.ProjectsWorldCamera.open &&
            document.querySelector(".world-route")?.getAttribute("aria-hidden")==="true" &&
