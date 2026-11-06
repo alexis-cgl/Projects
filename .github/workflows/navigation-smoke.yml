@@ -28,5 +28,7 @@ jobs:
         run: node tests/static-audit.cjs
       - name: Verify page lifecycle, keyboard interaction and responsive
         run: PROJECTS_TEST_CHROME=1 node tests/quality-regression.cjs
+      - name: Verify reverse scroll after returning from RackFlow
+        run: PROJECTS_TEST_CHROME=1 node tests/scroll-return-regression.cjs
       - name: Verify 20 navigation cycles and accessibility fallback
         run: PROJECTS_TEST_CHROME=1 node tests/navigation-smoke.cjs
