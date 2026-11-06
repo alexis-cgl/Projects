@@ -251,6 +251,11 @@
     active = -1;
     if (animated) {
       gsap.registerPlugin(ScrollTrigger);
+      // Mobile browser chrome changes the visual viewport height on scroll.
+      // Avoid repinning the whole cinematic scene on these small resizes.
+      if (matchMedia('(pointer:coarse)').matches) {
+        ScrollTrigger.config({ ignoreMobileResize: true });
+      }
       document.documentElement.classList.add('enhanced');
       cards.forEach(card => { card.inert = true; });
       context = gsap.context(() => {
