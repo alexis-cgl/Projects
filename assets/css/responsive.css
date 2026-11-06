@@ -214,3 +214,13 @@ body { min-width:280px; }
   .enhanced .project-card.active .rack-preview,
   .enhanced .project-card.active .portfolio-preview { animation:none; }
 }
+
+/* WCAG 2.2 AA target-size floor for compact touch-only rack ports. */
+@media (pointer:coarse) {
+  .rackflow-page .port-button {
+    width:26px;
+    min-width:26px;
+    height:26px;
+    min-height:26px;
+  }
+}
