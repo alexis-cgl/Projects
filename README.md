@@ -106,3 +106,20 @@ Les contrôles ci-dessous sont exécutés par GitHub Actions sur chaque pull req
 Les tests navigateur utilisent Playwright et un serveur statique local (voir le rapport pour les limites). L'application finale n'a aucune dépendance npm à exécuter dans le navigateur.
 
 Le sitemap des deux pages publiques est disponible dans `sitemap.xml`. Un échec de déploiement GitHub Pages sur `updating_pages` est distinct d'un échec de compilation ou de test : vérifier les journaux du job avant toute modification du code.
+
+
+## Responsive immersif : PC, Android, iPhone et tablettes
+
+La mise en page s'adapte au pointeur, à la largeur, à la hauteur et au mouvement réduit :
+
+- **Téléphones Android et iPhone :** animation de l'anneau et carrousel GSAP au scroll sur les hauteurs compatibles ; gestes tactiles, commandes accessibles, carte RackFlow adaptée et retour cinématique sans perte d'état.
+- **Paysage compact :** vue concentrée avec cartes réduites et contrôles adaptés, sans couper les contenus. Pour les très faibles hauteurs, la grille déroulante reste utilisable au lieu de contraindre un portail épinglé illisible.
+- **Tablettes :** démonstration RackFlow et cartes avec espacements ajustés ; boutons adaptés au tactile.
+- **Safari iOS / Chrome Android :** protection contre le changement de hauteur provoqué par les barres d'adresse mobiles et les réinitialisations inutiles de ScrollTrigger.
+- **Accessibilité :** le mode `prefers-reduced-motion` conserve toutes les pages et actions, mais désactive volontairement les mouvements cinématiques complexes.
+
+La présentation responsive est isolée dans `assets/css/responsive.css`, partagée par les deux pages. La démo RackFlow conserve une interface interactive et des ports tactiles d'au moins 26 pixels sur appareils à pointeur grossier.
+
+### Test de compatibilité multi-supports
+
+Le job `mobile-compatibility` exécute `tests/mobile-responsive.cjs` sur Chromium avec émulation tactile Android et sur WebKit (moteur Safari) avec émulation iPhone/iPad. Les tailles contrôlées vont de 320 à 844 pixels, portrait et paysage. Ces simulations ne garantissent pas les mêmes FPS qu'un iPhone ou Android physique : un contrôle manuel reste utile avant une démonstration publique importante.
