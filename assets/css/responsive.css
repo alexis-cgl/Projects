@@ -1,0 +1,212 @@
+/* Responsive experience — shared by Projects and RackFlow.
+ * The immersive desktop motion remains intact. Only layout, interaction
+ * density and compositing are adapted to narrow/touch viewports.
+ */
+:root { --tap-size:44px; }
+html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+body { min-width:280px; }
+.site-header {
+  padding-inline:env(safe-area-inset-left,0px) env(safe-area-inset-right,0px);
+}
+.site-header nav a, .cta, .discover, .rack-text-link, .footer-inner a,
+.feature-step, .sidebar-tab, .app-toolbar button, .inspector-btn {
+  touch-action:manipulation;
+}
+.cta, .discover, .rack-text-link { min-height:var(--tap-size); }
+.discover { gap:12px; }
+.app-toolbar button, .inspector-btn, .sidebar-tab { min-height:var(--tap-size); }
+.controls button { flex-shrink:0; min-width:var(--tap-size); min-height:var(--tap-size); }
+.project-card { -webkit-backface-visibility:hidden; backface-visibility:hidden; }
+.enhanced .deck { touch-action:pan-y; }
+.enhanced .project-card {
+  scrollbar-width:thin;
+  scrollbar-color:rgba(167,139,250,.6) transparent;
+  overscroll-behavior:contain;
+}
+.world-route {
+  width:100%;
+  width:100vw;
+  height:var(--camera-height,100dvh);
+  -webkit-transform-origin:0 0;
+}
+.rackflow-page .demo-app { max-width:100%; }
+.rackflow-page .demo-workspace,
+.rackflow-page .rack-cabinet,
+.rackflow-page .hero-product { min-width:0; }
+.rackflow-page .port-button { touch-action:manipulation; }
+@media (hover:none), (pointer:coarse) {
+  .project-card::before { opacity:.42; }
+  .project-card .thumb-rackflow::before { opacity:.75; }
+  .enhanced .project-card.active .rack-preview {
+    animation:rack-mobile-levitate 4.8s ease-in-out infinite;
+  }
+  .enhanced .project-card.active .portfolio-preview {
+    animation:rack-mobile-levitate 5.2s ease-in-out infinite reverse;
+  }
+  @keyframes rack-mobile-levitate {
+    0%,100% { translate:0 0; }
+    50% { translate:0 -7px; }
+  }
+  .feature-step:active, .sidebar-tab:active { background:rgba(167,139,250,.20); }
+  .port-button { position:relative; }
+  /* Touchable ports, with the same visual color feedback as desktop. */
+  .rackflow-page .port-button {
+    width:23px;
+    height:23px;
+    border-radius:4px;
+    min-width:23px;
+  }
+  .rackflow-page .port-button:focus-visible { outline-offset:2px; }
+  .rackflow-page .demo-device {
+    min-height:74px;
+    flex-direction:column;
+    align-items:stretch;
+    justify-content:center;
+    gap:8px;
+  }
+  .rackflow-page .device-ports {
+    display:flex;
+    flex-wrap:nowrap;
+    justify-content:space-between;
+    width:100%;
+    gap:2px;
+  }
+  .rackflow-page .device-name {
+    font-size:.75rem;
+    min-height:22px;
+  }
+}
+@media (max-width:900px) {
+  .wrap { width:min(100% - 44px,1220px); }
+  .rackflow-page .story-card { min-height:auto; }
+  .rackflow-page .demo-app { border-radius:18px; }
+  .rackflow-page .feature-step { min-height:76px; }
+}
+@media (max-width:680px) {
+  .wrap { width:calc(100% - 36px); }
+  .site-header { min-height:68px; height:auto; }
+  .header-inner { min-height:68px; }
+  .site-header nav { gap:12px; }
+  .site-header nav a { min-height:44px; display:inline-flex; align-items:center; }
+  .site-header nav .nav-github { display:none; }
+  .brand { flex-shrink:0; font-size:1.04rem; }
+  .intro h1 { font-size:clamp(2.75rem,12vw,5.6rem); white-space:normal; }
+  .hero { min-height:min(690px,100svh); }
+  .hero-label { flex-wrap:wrap; gap:8px; }
+  .lede br { display:none; }
+  .lede { max-width:370px; }
+  .intro { max-width:100%; }
+  .intro .cta { max-width:100%; }
+  .hero-index { max-width:100%; font-size:.55rem; gap:9px; }
+  .hero-index .index-rule { width:28px; flex-shrink:0; }
+  .enhanced .experience { height:100svh; min-height:0; }
+  .enhanced .hero { height:100%; min-height:0; }
+  .enhanced .intro { padding-top:clamp(22px,5svh,54px); }
+  .enhanced .project-card {
+    width:min(420px,calc(100vw - 36px));
+    max-height:calc(100% - 192px);
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .enhanced .catalogue-heading { top:12px; left:6%; right:6%; }
+  .enhanced .catalogue-heading h2 { font-size:clamp(1.85rem,6vw,2.45rem); margin:2px 0; }
+  .enhanced .catalogue-heading>p:last-child { display:none; }
+  .enhanced .thumb { height:clamp(106px,19svh,162px); }
+  .enhanced .card { padding:clamp(13px,3.4vw,20px); }
+  .enhanced .card h3 { font-size:clamp(1.55rem,6vw,2rem); }
+  .enhanced .card>p { font-size:clamp(.77rem,3.3vw,.9rem); line-height:1.45; }
+  .enhanced .card-tags { gap:5px; margin-bottom:12px; }
+  .enhanced .card-tags span { padding:4px 7px; }
+  .enhanced .controls {
+    bottom:clamp(34px,6svh,55px);
+    gap:12px;
+  }
+  .enhanced .controls button { width:46px; height:46px; }
+  .enhanced .counter { font-size:.7rem; min-width:125px; }
+  .enhanced .scroll-note { bottom:10px; }
+  .afterword h2 { overflow-wrap:anywhere; }
+  .afterword { padding:64px 0 76px; }
+  .footer-inner { flex-wrap:wrap; padding:24px 0; gap:12px; }
+  .rackflow-page .rack-hero { min-height:0; padding-top:48px; padding-bottom:85px; }
+  .rackflow-page .rack-hero h1 { font-size:clamp(3.6rem,14vw,6rem); }
+  .rackflow-page .rack-hero-copy { min-width:0; }
+  .rackflow-page .rack-eyebrow { margin-top:21px; }
+  .rackflow-page .rack-lead { font-size:clamp(1.55rem,6vw,2.2rem); }
+  .rackflow-page .rack-hero-labels { flex-wrap:wrap; row-gap:8px; }
+  .rackflow-page .rack-hero-labels span { white-space:nowrap; }
+  .rackflow-page .rack-hero-actions { margin-bottom:26px; }
+  .rackflow-page .product-window { max-width:100%; }
+  .rackflow-page .rack-section { padding:64px 0; }
+  .rackflow-page .rack-section h2 { font-size:clamp(2.35rem,8vw,3.6rem); }
+  .rackflow-page .story-card { padding:24px; }
+  .rackflow-page .demo-sidebar { justify-content:space-between; gap:3px; }
+  .rackflow-page .sidebar-tab { flex:1 1 auto; justify-content:center; min-width:0; padding:10px 5px; }
+  .rackflow-page .demo-workspace { min-height:0; }
+  .rackflow-page .rack-stage { min-height:390px; padding:18px 12px 22px; }
+  .rackflow-page .rack-cabinet { width:min(300px,100%); }
+  .rackflow-page .demo-app-head { gap:13px; }
+  .rackflow-page .app-toolbar { width:100%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .rackflow-page .app-toolbar button { width:100%; }
+  .rackflow-page .workspace-top { flex-wrap:wrap; }
+  .rackflow-page .workspace-bottom { font-size:.72rem; line-height:1.4; }
+  .rackflow-page .demo-inspector { min-width:0; }
+  .rackflow-page .alternate-view { min-height:300px; padding:20px 14px; }
+  .rackflow-page .alternate-row { align-items:flex-start; overflow-wrap:anywhere; }
+  .rackflow-page .feature-step { padding:18px 14px; }
+}
+@media (max-width:375px) {
+  .wrap { width:calc(100% - 28px); }
+  .site-header nav { gap:8px; }
+  .site-header nav a { font-size:.7rem; }
+  .brand { font-size:.97rem; gap:8px; }
+  .brand i { height:25px; }
+  .intro h1 { font-size:clamp(2.45rem,12vw,4rem); }
+  .enhanced .project-card { width:calc(100vw - 24px); max-height:calc(100% - 172px); }
+  .enhanced .thumb { height:clamp(96px,17svh,130px); }
+  .enhanced .catalogue-heading { top:9px; }
+  .enhanced .catalogue-heading h2 { font-size:1.8rem; }
+  .rackflow-page .rack-hero h1 { font-size:clamp(3.4rem,15.2vw,4.3rem); }
+  .rackflow-page .rack-hero-labels span:not(:first-child) { padding-left:8px; }
+  .rackflow-page .rack-stage { padding:14px 9px 18px; }
+  .rackflow-page .rack-cabinet { padding:10px 11px; }
+  .rackflow-page .port-button { min-width:21px; width:21px; height:23px; }
+  .rackflow-page .demo-app-head { padding:13px 11px; }
+  .rackflow-page .sidebar-tab { font-size:.66rem; }
+}
+@media (orientation:landscape) and (max-height:540px) {
+  .enhanced .experience { height:100svh; min-height:0; }
+  .enhanced .intro { padding-top:6px; }
+  .enhanced .intro h1 { font-size:clamp(2.2rem,7vh,3.8rem); margin:4px 0 0; }
+  .enhanced .hero-subline { font-size:1rem; }
+  .enhanced .lede { font-size:.78rem; line-height:1.35; margin:9px 0; max-width:450px; }
+  .enhanced .hero-index { display:none; }
+  .enhanced .catalogue-heading { top:5px; left:5%; }
+  .enhanced .catalogue-heading h2 { font-size:1.5rem; margin:0; }
+  .enhanced .project-card {
+    top:52%;
+    width:min(360px,67vw);
+    max-height:calc(100% - 80px);
+  }
+  .enhanced .thumb { height:88px; }
+  .enhanced .card { padding:10px 15px; }
+  .enhanced .card h3 { font-size:1.45rem; margin-bottom:2px; }
+  .enhanced .card>p { font-size:.71rem; margin-bottom:6px; line-height:1.3; }
+  .enhanced .card-tags { margin-bottom:4px; }
+  .enhanced .discover { padding-top:5px; }
+  .enhanced .controls { left:auto; right:4%; bottom:8px; gap:8px; }
+  .enhanced .controls button { height:40px; width:40px; min-width:40px; min-height:40px; }
+  .enhanced .counter { min-width:55px; font-size:.6rem; max-width:70px; }
+  .enhanced .scroll-note { display:none; }
+  .rackflow-page .rack-hero { padding-top:25px; gap:26px; }
+  .rackflow-page .rack-section { padding-block:45px; }
+}
+@media (max-width:680px) and (prefers-reduced-motion:reduce) {
+  .experience { min-height:0; }
+  .hero { min-height:500px; }
+  .deck { display:grid; gap:18px; }
+  .project-card { max-height:none; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .enhanced .project-card.active .rack-preview,
+  .enhanced .project-card.active .portfolio-preview { animation:none; }
+}
