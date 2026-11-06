@@ -11,7 +11,7 @@ const exists = file => fs.existsSync(path.join(root, file));
 
 const htmlFiles = ["index.html", "rackflow.html"];
 const scripts = ["assets/js/portal.js", "assets/js/premium.js", "assets/js/rackflow.js"];
-const styles = ["assets/css/styles.css", "assets/css/rackflow.css", "assets/css/world-nav.css"];
+const styles = ["assets/css/styles.css", "assets/css/rackflow.css", "assets/css/world-nav.css", "assets/css/responsive.css"];
 const vendors = ["assets/vendor/gsap.min.js", "assets/vendor/ScrollTrigger.min.js"];
 const warnings = [];
 
