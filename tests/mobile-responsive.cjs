@@ -35,6 +35,7 @@ async function inspectOverflow(page,context){
    browsers.chromium=await chromium.launch({headless:true,channel:process.env.PROJECTS_TEST_CHROME?"chrome":undefined,args:["--no-sandbox"]});
    browsers.webkit=await webkit.launch({headless:true});
    for(const spec of cases){
+     if(process.env.PROJECTS_TEST_ONLY && !spec.name.includes(process.env.PROJECTS_TEST_ONLY)) continue;
      const browser=browsers[spec.engine];
      const context=await browser.newContext({viewport:{width:spec.width,height:spec.height},deviceScaleFactor:2,hasTouch:true,isMobile:true,reducedMotion:"no-preference"});
      const page=await context.newPage();
@@ -49,6 +50,19 @@ async function inspectOverflow(page,context){
        const paint0=await page.evaluate(()=>window.ProjectsPortal.paintCount);
        await page.waitForTimeout(230);
        const animated=await page.evaluate(()=>({phase:window.ProjectsPortal.phase,paint:window.ProjectsPortal.paintCount}));
+       if(!(animated.phase>phase0 && animated.paint>paint0)){
+         const diag=await page.evaluate(()=>({
+           y:scrollY,height:innerHeight,hidden:document.hidden,
+           ready:document.readyState,
+           inView:window.ProjectsPortal?.inView,
+           frameActive:window.ProjectsPortal?.frameActive,
+           triggerProgress:window.ScrollTrigger?.getAll()[0]?.progress,
+           triggerActive:window.ScrollTrigger?.getAll()[0]?.isActive,
+           phase:window.ProjectsPortal?.phase,
+           paint:window.ProjectsPortal?.paintCount
+         }));
+         console.log("TORUS MOBILE DIAG "+spec.name,JSON.stringify({phase0,paint0,animated,diag}));
+       }
        assert(animated.phase>phase0&&animated.paint>paint0,spec.name+": torus not animated on first view");
        const enhanced=await page.evaluate(()=>document.documentElement.classList.contains("enhanced"));
        assert(enhanced,spec.name+": scroll experience disabled on a supported mobile viewport");
