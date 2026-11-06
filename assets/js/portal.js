@@ -403,6 +403,7 @@
   window.ProjectsPortal = { snapshot, restore, suspend, resume, goTo,
     getCard: key => cards.find(c => c.dataset.project === key) || null,
     get phase() { return phase; },
+    get animationState() { return { ...state }; },
     get ringYaw() { return rotation.yaw; },
     get ringPitch() { return rotation.pitch; },
     get ringRoll() { return rotation.roll; },
