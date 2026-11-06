@@ -326,11 +326,15 @@
     // Bypass animated scrolling during restoration, or scrub:1.2 causes a visible rewind.
     window.scrollTo({ top: targetScroll, behavior: 'instant' });
     if (trigger) {
-      // A scrub tween can keep advancing after history navigation and silently
-      // change state.slide on the next frame. Stop it before/after syncing.
-      trigger.getTween?.()?.kill();
+      // Preserve ScrollTrigger's scrub tween. Killing it detaches the tween
+      // from GSAP permanently: ScrollTrigger.progress then updates on scroll
+      // but its animation stays frozen at the returned carousel position.
+      // Pause it only while synchronizing the saved position. Subsequent
+      // ScrollTrigger updates can restart the SAME tween in both directions.
+      const scrub = trigger.getTween?.();
+      scrub?.pause();
       trigger.update();
-      trigger.getTween?.()?.kill();
+      scrub?.pause();
       if (progress !== null) timeline.progress(progress, true);
       if (Number.isFinite(saved.slide)) state.slide = saved.slide;
       lastLayout = null;
@@ -363,7 +367,8 @@
   }
   function suspend() {
     paused = true;
-    timeline?.scrollTrigger?.getTween?.()?.kill();
+    // Suspend without destroying GSAP's persistent scrub tween.
+    timeline?.scrollTrigger?.getTween?.()?.pause();
     if (frame) cancelAnimationFrame(frame);
     frame = 0;
   }
